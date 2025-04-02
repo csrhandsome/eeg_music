@@ -1,7 +1,7 @@
 #include <Math.h>
 #include "chimes.h"
 
-#define ISR_CYCLE 16 //16s
+#define ISR_CYCLE 16 //16us
 
 char strbuf[255];
 uint16_t ADSR_default[] = {0, 0, 100, 0, MAX_VOLUME};
@@ -56,28 +56,31 @@ void play(uint16_t freq, uint16_t duration)
 	ADSR_env[4] = _envelope ? _envelope[4] : MAX_VOLUME;
 	//Serial.println(ADSR_env[4]);
 
-	if (freq == 0)
-	{ //Pause
-		tPeriod = ISR_CYCLE * 100;
-		waveform = PAUSE;
+	if (freq == 0)    // 当频率为0时，表示这是一个休止符
+	{ 
+	    tPeriod = ISR_CYCLE * 100;    // 设置一个1600微秒的周期作为休止符长度
+	    waveform = PAUSE;              // 将波形类型设置为PAUSE，输出静音
 	}
 	else
-		tPeriod = 1E6 / freq;
-
-	nSamples = tPeriod / ISR_CYCLE;
+	    tPeriod = 1E6 / freq;         // 将频率(Hz)转换为周期(微秒)，1E6是1秒=1000000微秒
+	
+	nSamples = tPeriod / ISR_CYCLE;   // 计算一个周期需要多少个采样点
+	                                  // 例如：440Hz的A音：
+	                                  // tPeriod = 1000000/440 ≈ 2272.7微秒
+	                                  // nSamples = 2272.7/16 ≈ 142个采样点
 	realloc(samples, nSamples);
 	uint16_t nDuty = (_duty_cycle * nSamples) / 100;
 
 	switch (waveform)
 	{
-	case SINE: //Sinewave
+	case SINE: //Sinewave 类似笛子的音色
 		for (int i = 0; i < nSamples; i++)
 		{
 			samples[i] = 128 + 127 * sin(2 * PI * i / nSamples);
 		}
 		break;
 
-	case TRI: //Triangle
+	case TRI: //Triangle 类似早期电子游戏的音效
 		for (int16_t i = 0; i < nSamples; i++)
 		{
 			if (i < nDuty)
@@ -90,7 +93,7 @@ void play(uint16_t freq, uint16_t duration)
 			}
 		}
 		break;
-	case RECT: //Rectangle
+	case RECT: //Rectangle 类似老式电子音乐或8位游戏音效
 		for (int16_t i = 0; i < nSamples; i++)
 		{
 			i < nDuty ? samples[i] = 255 : samples[i] = 0;
@@ -113,14 +116,13 @@ boolean isPlaying()
 }
 } // namespace Chimes
 
-//Called every 16s, when TIMER1 overflows
+//Called every 16us (microseconds), when Timer2 overflows
 ISR(TIMER2_OVF_vect)
 {
 	static uint32_t adsr_timer, adsr_time;
 	static uint16_t cnt; //Index counter
 	static uint8_t sustain_lvl, vol;
-
-	//Set OCR2A to the next value in sample array, this will change the duty cycle accordingly
+    // sample为完整的波形，vol为音量控制 ,/MAX_VOLUME是归一化处理
 	OCR2A = vol * samples[cnt] / MAX_VOLUME;
 	if (cnt < nSamples - 1)
 	{
