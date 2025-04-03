@@ -6,7 +6,9 @@ import bluetooth
 from mindwave.bluetooth_headset import connect_magic, connect_bluetooth_addr
 from mindwave.bluetooth_headset import BluetoothError
 
-def mindwave_startup(description="", extra_args=[]):
+def mindwave_startup(description="", extra_args=None):
+    if extra_args is None:
+        extra_args = []
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('address', type=str, nargs='?',
             const=None, default=None,
@@ -15,13 +17,14 @@ def mindwave_startup(description="", extra_args=[]):
             to save a few seconds during startup.""")
     for params in extra_args:
         name = params['name']
-        del params['name']
-        parser.add_argument(name, **params)
+        params_copy = params.copy()
+        del params_copy['name']
+        parser.add_argument(name, **params_copy)
     args = parser.parse_args(sys.argv[1:])
     if args.address is None:
         socket, socket_addr = connect_magic()
         if socket is None:
-            print( "No MindWave Mobile found.")
+            print("No MindWave Mobile found.")
             sys.exit(-1)
     else:
         socket = connect_bluetooth_addr(args.address)
@@ -29,7 +32,7 @@ def mindwave_startup(description="", extra_args=[]):
             print("Connection failed.")
             sys.exit(-1)
         socket_addr = args.address
-    print( "Connected with MindWave Mobile at %s" % socket_addr)
+    print(f"Connected with MindWave Mobile at {socket_addr}")
     for i in range(5):
         try:
             if i>0:
@@ -40,6 +43,6 @@ def mindwave_startup(description="", extra_args=[]):
         except BluetoothError:
             print("BluetoothError")
         if i == 5:
-            print( "Connection failed.")
+            print("Connection failed.")
             sys.exit(-1)
     return socket, args
