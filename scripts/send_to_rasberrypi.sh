@@ -1,0 +1,1 @@
+scp -r /media/three/HIKSEMI/codes/grade_one/my_projects/eeg_music three@192.168.5.12:~/code/eeg_music
