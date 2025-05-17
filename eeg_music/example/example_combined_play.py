@@ -162,7 +162,7 @@ def combined_play():
                 
                 # 从Arduino获取距离作为频率修饰
                 if arduino_connected:
-                    arduino_data = arduino_reader.get_current_data()
+                    arduino_data = arduino_reader.current_data
                     distance = arduino_data['distance']
                     voltage = arduino_data['voltage']
                 else:

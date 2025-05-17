@@ -10,7 +10,7 @@ import serial.tools.list_ports
 from eeg_music.reader.MindwaveSerial import MindwaveSerial
 
 class MindwaveSerialReader:
-    def __init__(self, port=None, baudrate=57600, timeout=1, name='default'):
+    def __init__(self, port=None, baudrate=57600, timeout=1, name='default', mood='default'):
         """初始化串口连接"""
         # 根据操作系统自动选择默认端口
         if port is None:
@@ -26,7 +26,9 @@ class MindwaveSerialReader:
         self.neuro = None
         self.data_buffer = []
         self.name = name
-        
+        mood_labels = {'happy':0,'sad':1,'angry':2,'peaceful':3}
+        self.mood = mood_labels[mood]
+
     def connect(self):
         """建立串口连接"""
         try:
@@ -44,25 +46,25 @@ class MindwaveSerialReader:
             self.neuro.stop()
             print("串口连接已关闭")
             
-    def read_data(self, save_to_file=True, duration=None):
+    def read_data(self, save_to_file=False, duration=None):
         """读取脑波数据并可选择保存到文件
         
         参数:
         save_to_file (bool): 是否保存数据到文件
-        duration (int): 读取时间（秒），None表示一直读取直到中断
+        duration (int): 读取时间(s) None表示一直读取直到中断
         """
         if not self.neuro:
             print("未连接到脑波设备")
             return
-            
         try:
             start_time = time.time()
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M%f")
             while True:
                 # 获取当前的脑波数据
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                
                 # 收集所有类型的脑波数据
+                t = time.time() - start_time
                 brain_data = {
+                    'timestamp': t,
                     'attention': self.neuro.attention,
                     'meditation': self.neuro.meditation,
                     'rawValue': self.neuro.rawValue,
@@ -75,44 +77,67 @@ class MindwaveSerialReader:
                     'lowGamma': self.neuro.lowGamma,
                     'midGamma': self.neuro.midGamma,
                     'poorSignal': self.neuro.poorSignal,
-                    'blinkStrength': self.neuro.blinkStrength
+                    'blinkStrength': self.neuro.blinkStrength,
+                    'mood': self.mood
                 }
                 
                 print(
                     f"rawValue: {brain_data['rawValue']}, "
                     f"专注度: {brain_data['attention']}, "
                     f"冥想度: {brain_data['meditation']}, "
-                    f"信号质量: {brain_data['poorSignal']}"
+                    f"信号质量: {brain_data['poorSignal']}, "
+                    f"信号强度: {brain_data['blinkStrength']}"
                 )
                 
-                # 保存数据
-                if save_to_file:
+                # 保存数据 将attention作为衡量信号的指标
+                if save_to_file and brain_data['attention'] > 50:
                     self.data_buffer.append(brain_data)
                     
-                    # 每100条数据保存一次
-                    if len(self.data_buffer) >= 50:
-                        self.save_data_to_file()
-                        self.data_buffer = []
+                    # # 每100条数据保存一次
+                    # if len(self.data_buffer) >= 100:
+                    #     self.save_data_to_file(timestamp)
+                    #     self.data_buffer = []
                 
                 # 如果设置了持续时间，检查是否达到
-                if duration and (time.time() - start_time) >= duration:
-                    break
-                        
-                time.sleep(0.5)  # 短暂休眠以避免CPU占用过高
+                if duration is not None:
+                    if (time.time() - start_time) >= duration:
+                        self.save_data_to_file(timestamp)
+                        self.data_buffer = []
+                        break
+                
+                time.sleep(0.1)  # 帧率只有1hz,但是rawdata的时间很长
                 
         except KeyboardInterrupt:
             print("\n停止读取数据")
         finally:
             if save_to_file and self.data_buffer:
-                self.save_data_to_file()
-            
-    def save_data_to_file(self):
+                self.save_data_to_file(timestamp)
+    @property   
+    def current_data(self):
+        """获取当前的脑波数据"""
+        return {
+            'attention': self.neuro.attention,
+            'meditation': self.neuro.meditation,
+            'rawValue': self.neuro.rawValue,
+            'delta': self.neuro.delta,
+            'theta': self.neuro.theta,
+            'lowAlpha': self.neuro.lowAlpha,
+            'highAlpha': self.neuro.highAlpha,
+            'lowBeta': self.neuro.lowBeta,
+            'highBeta': self.neuro.highBeta,
+            'lowGamma': self.neuro.lowGamma,
+            'midGamma': self.neuro.midGamma,
+            'poorSignal': self.neuro.poorSignal,
+            'blinkStrength': self.neuro.blinkStrength,
+            'mood': self.mood
+        }
+
+    def save_data_to_file(self,timestamp):
         """将数据保存到文件"""
         if not self.data_buffer:
             return
             
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"mindwave_data_{timestamp}.csv"
+        filename = f"mindwave_data_{timestamp}_{self.name}_{self.mood}.csv"
         
         try:
             # 确保存在data目录
@@ -120,14 +145,16 @@ class MindwaveSerialReader:
                 os.makedirs('data')
             
             # 创建以被试者名字命名的子目录
-            subject_dir = os.path.join('data', self.name)
+            subject_dir = os.path.join('data', 'eeg', self.name)
             if not os.path.exists(subject_dir):
                 os.makedirs(subject_dir)
                 
             filepath = os.path.join(subject_dir, filename)
             with open(filepath, 'w', encoding='utf-8') as f:
+                # 添加列标题
+                f.write("timestamp,attention,meditation,rawValue,delta,theta,lowAlpha,highAlpha,lowBeta,highBeta,lowGamma,midGamma,poorSignal,blinkStrength,mood\n")
                 for data in self.data_buffer:
-                    f.write(f"{data['attention']},{data['meditation']},{data['rawValue']},{data['delta']},{data['theta']},{data['lowAlpha']},{data['highAlpha']},{data['lowBeta']},{data['highBeta']},{data['lowGamma']},{data['midGamma']},{data['poorSignal']},{data['blinkStrength']}\n")
+                    f.write(f"{data['timestamp']},{data['attention']},{data['meditation']},{data['rawValue']},{data['delta']},{data['theta']},{data['lowAlpha']},{data['highAlpha']},{data['lowBeta']},{data['highBeta']},{data['lowGamma']},{data['midGamma']},{data['poorSignal']},{data['blinkStrength']},{data['mood']}\n")
             print(f"数据已保存到文件: {filepath}")
         except Exception as e:
             print(f"保存数据时出错: {str(e)}")

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arduino实时数据可视化</title>
+    <!-- 引入 d3.js -->
+    <script src="d3.min.js"></script>
+    <!-- 引入 p5.js -->
+    <script src="p5.min.js"></script>
+    <!-- 移除 p5.sound.js -->
+    <!-- <script src="p5.sound.min.js"></script> -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            color: white;
+            font-family: Arial, sans-serif, "Microsoft YaHei";
+            overflow: hidden;
+        }
+        #status-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+            max-width: 350px;
+        }
+        #status {
+            font-weight: bold;
+        }
+        #arduino-data {
+            display: block;
+            margin-top: 5px;
+            font-family: monospace;
+            background-color: rgba(30, 30, 30, 0.8);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 100;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .slider-container {
+            margin-top: 10px;
+        }
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="status-container">
+        <p>WebSocket状态: <span id="status">正在连接...</span></p>
+        <p>Arduino数据: <span id="arduino-data">等待数据...</span></p>
+    </div>
+    
+    <div class="control-panel">
+        <!-- 移除声音控制按钮 -->
+        <!-- <button id="toggle-sound">声音开/关</button> -->
+        <button id="toggle-visual-mode">切换可视化模式</button>
+        <!-- 移除音量滑块 -->
+        <!-- <div class="slider-container">
+            <label for="volume-slider">音量</label>
+            <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5">
+        </div> -->
+    </div>
+    
+    <script src="arduino_sketch.js"></script>
+</body>
+</html> 

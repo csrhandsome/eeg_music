@@ -1,5 +1,7 @@
 from eeg_music.reader.MindwaveSerialReader import MindwaveSerialReader
 import argparse
+
+# !!!采集数据前，需要用水沾湿eeg设备!!!
 def record_data():
     # 创建命令行参数解析器
     parser = argparse.ArgumentParser(description='Mindwave 脑波数据读取器')
@@ -10,6 +12,7 @@ def record_data():
     parser.add_argument('-d', '--duration', type=int, help='读取持续时间（秒），默认持续读取直到中断')
     parser.add_argument('-n', '--no-save', action='store_true', help='不保存数据到文件')
     parser.add_argument('-e', '--name', default='default', help='被试者的名字')
+    parser.add_argument('-m', '--mood', default='default', help='被试者的情绪')
     args = parser.parse_args()
     
     
@@ -18,7 +21,8 @@ def record_data():
         port=args.port,
         baudrate=args.baudrate,
         timeout=args.timeout,
-        name=args.name
+        name=args.name,
+        mood=args.mood
     )
     
     # 尝试连接串口

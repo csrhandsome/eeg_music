@@ -87,8 +87,9 @@ class ArduinoSerialReader:
                         print(f"时间戳: {self.timestamp}, 距离: {self.distance} cm, 音符: {self.note}, 频率: {self.frequency} Hz, 电压: {self.voltage} V")
                 
                 # 如果设置了持续时间，检查是否达到
-                if duration and (time.time() - start_time) >= duration:
-                    break
+                if duration is not None:
+                    if (time.time() - start_time) >= duration:
+                        break
                     
                 time.sleep(0.01)  # 短暂休眠以避免CPU占用过高
                 
@@ -98,7 +99,8 @@ class ArduinoSerialReader:
             print(f"读取数据时出错: {str(e)}")
         finally:
             pass
-    
+
+    # arduino的代码逻辑是一行一行的打印出来，所以需要_parse_data方法来解析数据
     def _parse_data(self, line):
         """解析Arduino传来的数据行
         
@@ -137,14 +139,14 @@ class ArduinoSerialReader:
         except Exception as e:
             print(f"解析数据时出错: {str(e)}")
     
-    def get_current_data(self):
+    @property
+    def current_data(self):
         """获取当前的数据
         
         返回:
             dict: 包含当前读取的距离、音符和频率数据
         """
         return {
-            'timestamp': self.timestamp,
             'distance': self.distance,
             'note': self.note,
             'frequency': self.frequency,
