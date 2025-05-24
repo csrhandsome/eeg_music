@@ -7,7 +7,7 @@ from threading import Thread
 from eeg_music.reader.ArduinoSerialReader import ArduinoSerialReader
 from eeg_music.reader.MindwaveSerialReader import MindwaveSerialReader
 from eeg_music.audio.MusicPlayer import MusicPlayer
-from arduino.util.scale import map_to_frequency
+from eeg_music.util.map import map_to_frequency
 
 
 def mindwave_play():
@@ -164,7 +164,7 @@ def combined_play():
                 if arduino_connected:
                     arduino_data = arduino_reader.current_data
                     distance = arduino_data['distance']
-                    voltage = arduino_data['voltage']
+                    voltage = arduino_data['potentiometer']
                 else:
                     distance = 50
                     voltage = 2.5

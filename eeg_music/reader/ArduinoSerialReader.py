@@ -27,9 +27,12 @@ class ArduinoSerialReader:
         # 用于存储解析的数据
         self.timestamp = ""
         self.distance = 0
+        self.scale = ""
         self.note = 0
         self.frequency = 0
-        self.voltage = 0
+        self.potentiometer = 0
+        self.rotary_potentiometer = ""
+        self.button_state = 0
         
     def connect(self):
         """建立串口连接"""
@@ -84,7 +87,7 @@ class ArduinoSerialReader:
                     
                     if line:
                         self._parse_data(line)
-                        print(f"时间戳: {self.timestamp}, 距离: {self.distance} cm, 音符: {self.note}, 频率: {self.frequency} Hz, 电压: {self.voltage} V")
+                        print(f"时间戳: {self.timestamp}, 距离: {self.distance} cm, 音阶: {self.scale}, 音符: {self.note}, 频率: {self.frequency} Hz, 电位器: {self.potentiometer}, 旋转电位器: {self.rotary_potentiometer}, 按钮状态: {self.button_state}")
                 
                 # 如果设置了持续时间，检查是否达到
                 if duration is not None:
@@ -105,37 +108,49 @@ class ArduinoSerialReader:
         """解析Arduino传来的数据行
         
         示例格式:
-        17:43:02.855 -> 0
-        17:43:02.855 -> Distance: 34.79 cm, Note: 5, Frequency: 440.00 Hz, Potentiometer Voltage: 0 V
+        Distance: 34.79 cm, Scale: C Major, Note: 5, Adjusted Frequency: 440.00 potentiometer 2.55 Rotary potentiometer: 3.25 Button State: 1
         """
         try:
-            # 时间戳行
-            if "->" in line and not any(keyword in line for keyword in ["Distance", "Note", "Frequency"]):
-                parts = line.split("->")
-                if len(parts) == 2:
-                    self.timestamp = parts[0].strip()
-            
-            # 数据行
-            elif "Distance" in line and "Note" in line and "Frequency" in line:
+            # 检查是否是数据行（包含Distance关键字）
+            if "Distance:" in line:
                 # 提取距离
                 distance_match = re.search(r"Distance:\s+([\d.]+)\s+cm", line)
                 if distance_match:
                     self.distance = float(distance_match.group(1))
+                    
+                # 提取音阶
+                scale_match = re.search(r"Scale:\s+([^,]+),", line)
+                if scale_match:
+                    self.scale = scale_match.group(1).strip()
                     
                 # 提取音符
                 note_match = re.search(r"Note:\s+(\d+)", line)
                 if note_match:
                     self.note = int(note_match.group(1))
                     
-                # 提取频率
-                freq_match = re.search(r"Frequency:\s+([\d.]+)\s+Hz", line)
+                # 提取调整后的频率
+                freq_match = re.search(r"Adjusted Frequency:\s+([\d.]+)", line)
                 if freq_match:
                     self.frequency = float(freq_match.group(1))
                     
                 # 提取电位器电压
-                voltage_match = re.search(r"Potentiometer Voltage:\s+(\d+)\s+V", line)
-                if voltage_match:
-                    self.voltage = int(voltage_match.group(1))
+                potentiometer_match = re.search(r"potentiometer\s+([\d.]+)", line)
+                if potentiometer_match:
+                    self.potentiometer = float(potentiometer_match.group(1))
+                    
+                # 提取旋转电位器电压
+                rotary_pot_match = re.search(r"Rotary potentiometer:\s+([\d.]+)", line)
+                if rotary_pot_match:
+                    self.rotary_potentiometer = rotary_pot_match.group(1)
+                    
+                # 提取按钮状态
+                button_match = re.search(r"Button State:\s+(\d+)", line)
+                if button_match:
+                    self.button_state = int(button_match.group(1))
+                
+                # 更新时间戳
+                self.timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+                
         except Exception as e:
             print(f"解析数据时出错: {str(e)}")
     
@@ -144,13 +159,18 @@ class ArduinoSerialReader:
         """获取当前的数据
         
         返回:
-            dict: 包含当前读取的距离、音符和频率数据
+            dict: 包含当前读取的所有传感器数据
         """
         return {
             'distance': self.distance,
+            'scale': self.scale,
             'note': self.note,
-            'frequency': self.frequency,
-            'voltage': self.voltage
+            'freq': self.frequency,
+            'potentiometer': self.potentiometer,
+            'rotary_potentiometer': self.rotary_potentiometer,
+            'button_state': self.button_state,
+            # 为了向后兼容，保留voltage字段，映射到potentiometer
+            'voltage': self.potentiometer
         }
 
 def list_available_ports():
@@ -168,10 +188,10 @@ def main():
     # 创建命令行参数解析器
     parser = argparse.ArgumentParser(description='Arduino 串口数据读取器')
     parser.add_argument('-p', '--port', help='串口设备路径,例如COM3(Windows)或/dev/ttyUSB0(Linux)')
-    parser.add_argument('-b', '--baudrate', type=int, default=9600, help='波特率，默认9600')
-    parser.add_argument('-t', '--timeout', type=float, default=1, help='超时设置，默认1秒')
+    parser.add_argument('-b', '--baudrate', type=int, default=9600, help='波特率,默认9600')
+    parser.add_argument('-t', '--timeout', type=float, default=1, help='超时设置,默认1秒')
     parser.add_argument('-l', '--list', action='store_true', help='列出所有可用的串口设备')
-    parser.add_argument('-d', '--duration', type=int, help='读取持续时间（秒），默认持续读取直到中断')
+    parser.add_argument('-d', '--duration', type=int, help='读取持续时间（秒）,默认持续读取直到中断')
     args = parser.parse_args()
     
     # 如果用户请求列出设备，则显示设备列表后退出

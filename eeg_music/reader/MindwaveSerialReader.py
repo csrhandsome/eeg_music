@@ -112,6 +112,7 @@ class MindwaveSerialReader:
         finally:
             if save_to_file and self.data_buffer:
                 self.save_data_to_file(timestamp)
+    
     @property   
     def current_data(self):
         """获取当前的脑波数据"""

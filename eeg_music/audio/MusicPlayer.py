@@ -2,6 +2,7 @@ import pygame
 import time
 import sys
 import os
+import csv
 from eeg_music.audio.generate_wave import generate_instrument_wave
 
 class MusicPlayer:
@@ -22,7 +23,7 @@ class MusicPlayer:
             
         # 导入音阶数据
         try:
-            from data.instrument.scales import INSTRUMENT_SCALES, TRADITIONAL_SCALE
+            from eeg_music.audio.scales import INSTRUMENT_SCALES, TRADITIONAL_SCALE
             self.instrument_scales = INSTRUMENT_SCALES
             self.traditional_scale = TRADITIONAL_SCALE
             self.scales_available = True
@@ -62,6 +63,32 @@ class MusicPlayer:
         if wait:
             # 等待音符播放完毕
             pygame.time.wait(int(duration * 1000))
+    
+    def play_csv_file(self, csv_file_path):
+        """
+        播放CSV文件中的音符
+        csv_data = {
+            'timestamp': relative_time,
+            'freq': freq,
+            'duration': duration,
+            'instrument': instrument,
+            'intensity': intensity,
+            'note_name': note_name,
+            'session_name': self.session_name
+            **arduino_data
+            **mindwave_data
+        }
+        """
+        with open(csv_file_path, 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                freq = float(row['freq'])
+                duration = float(row['duration'])
+                instrument = row['instrument']
+                intensity = float(row['intensity'])
+                self.play_note(freq, duration, instrument, intensity, wait=False)
+                time.sleep(duration)
+    
     
     def play_note_by_name(self, note_name, duration=0.5, instrument="piano", intensity=0.8, wait=True):
         """按音符名称播放音符
