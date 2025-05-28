@@ -1,0 +1,1218 @@
+/* 如果要给多个径向渐变添加动画，会复杂很多，可能需要用 JS 或者更高级的 CSS 技巧 */
+/* 例如，通过 CSS 自定义属性来控制每个径向渐变的位置，然后动画化这些属性 */
+#status {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+#arduino-data {
+    display: block;
+    margin-top: 8px;
+    font-family: 'Courier New', monospace;
+    background-color: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    line-height: 1.4;
+    white-space: pre-line;
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px;
+    outline: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+input[type="text"]:focus {
+    border-color: #4CAF50;
+    box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+input[type="text"]::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+button {
+    background: transparent;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.send-button {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.track-legend {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.track-legend li {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.track-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 3px;
+    margin-right: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 模式切换按钮样式 */
+.mode-switch {
+    background: linear-gradient(45deg, #9C27B0, #673AB7);
+    margin-top: 10px;
+}
+
+.mode-switch:hover {
+    box-shadow: 0 4px 15px rgba(156, 39, 176, 0.5);
+}
+
+/* 侧边隐藏面板样式 */
+.side-panel {
+    position: fixed;
+    top: 40%;
+    transform: translateY(-50%);
+    z-index: 100;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.left-panel {
+    left: -250px;
+}
+
+.left-panel.expanded {
+    left: 10px;
+}
+
+.right-panel {
+    right: -250px;
+}
+
+.right-panel.expanded {
+    right: 10px;
+}
+
+.panel-tab {
+    position: absolute;
+    width: 35px;
+    height: 70px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.left-panel .panel-tab {
+    right: -36px;
+    border-radius: 0 8px 8px 0;
+}
+
+.right-panel .panel-tab {
+    left: -36px;
+    border-radius: 8px 0 0 8px;
+}
+
+.panel-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.05);
+}
+
+.panel-body {
+    width: 250px;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px 12px 0 0;
+}
+
+.panel-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #4CAF50;
+}
+
+/* 游戏信息面板特殊定位 */
+#game-info {
+    top: 30%;
+}
+
+.minimize-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.minimize-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.panel-content {
+    padding: 15px;
+}
+
+/* 强制录制模态窗口样式 */
+.recording-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.forced-modal {
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    min-width: 400px;
+    max-width: 500px;
+    animation: slideIn 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    padding-bottom: 15px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #ff6b6b;
+    font-size: 18px;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+}
+
+.close-button {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.close-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.modal-body p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.recording-indicator {
+    width: 12px;
+    height: 12px;
+    background: #ff4444;
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+.warning-text {
+    font-size: 12px;
+    color: #ffaa00 !important;
+    text-align: center;
+    margin-top: 10px !important;
+    font-weight: bold;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.1); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* P5.js 画布样式 - 全屏卡通风格
+#p5-canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    overflow: hidden;
+}
+
+#p5-canvas-container canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+} */
+
+/* 左上角控制按钮样式现在由毛玻璃样式处理 */
+
+/* 通用浮动控制栏 - 在所有设备上都显示 */
+.mobile-control-bar {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.0);
+    border-radius: 25px;
+    z-index: 800;
+    display: flex !important; /* 强制显示 */
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+}
+
+/* 控制栏按钮样式现在由毛玻璃样式处理 */
+
+/* 状态显示 - 右上角小窗 */
+.mobile-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 120px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 600;
+    font-size: 9px;
+    line-height: 1.2;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(5px);
+}
+
+/* 轨道信息 - 左上角小图标 */
+.mobile-track-info {
+    position: fixed;
+    top: 10px;
+    left: 140px; /* 避免与新按钮重叠 */
+    display: flex;
+    gap: 5px;
+    z-index: 700;
+}
+
+.track-mini-icon {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 2px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+/* 输入面板 - 屏幕中间上部分弹出式 */
+.mobile-input-panel {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 20px;
+    z-index: 1000;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(-50%) translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.mobile-input-panel.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* 输入面板背景遮罩 - 隐藏不使用 */
+.input-panel-overlay {
+    display: none;
+}
+
+/* 输入面板头部 */
+.mobile-input-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.mobile-input-panel .panel-title {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* 关闭按钮 */
+.mobile-input-panel .close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+    min-width: auto;
+}
+
+.mobile-input-panel .close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.mobile-input-panel input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+/* 移动端响应式设计 - 全新布局 */
+@media (max-width: 768px) {
+    /* P5画布全屏优化 */
+    /* #p5-canvas-container {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 1 !important;
+    } */
+    
+    /* 隐藏所有侧边面板，使用浮动小控件 */
+    .side-panel {
+        display: none;
+    }
+    
+    /* 移动端播放按钮调整 */
+    .play-button {
+        width: 50px;
+        height: 50px;
+        top: 15px;
+        left: 15px;
+    }
+    
+    .play-button::before {
+        border-left: 15px solid white;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        margin-left: 3px;
+    }
+
+    
+    /* 移动端轨道信息位置调整 */
+    .mobile-track-info {
+        left: 10px; /* 移动端时回到左边 */
+    }
+    
+    /* 隐藏原有控制元素 */
+    .control-panel,
+    .song-input-panel,
+    .game-info {
+        display: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* 小屏幕移动端优化 */
+    .mobile-control-bar {
+        width: 320px;
+        height: 45px;
+        padding: 3px;
+        border-radius: 22px;
+        gap: 3px;
+    }
+    
+    .mobile-control-bar button {
+        padding: 8px 12px;
+        font-size: 10px;
+        height: 35px;
+        border-radius: 18px;
+    }
+    
+    .mobile-input-panel {
+        top: 15%;
+        width: 95%;
+        padding: 15px;
+    }
+    
+    .mobile-status {
+        width: 100px;
+        font-size: 8px;
+        padding: 6px;
+    }
+    
+    .track-mini-icon {
+        width: 20px;
+        height: 20px;
+        font-size: 8px;
+        border-width: 1px;
+    }
+    
+    .mobile-input-panel {
+        padding: 12px;
+    }
+    
+    .mobile-input-panel input {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .mobile-input-panel button {
+        padding: 10px;
+        font-size: 13px;
+    }
+    
+    .mobile-input-panel.show {
+        bottom: 55px;
+    }
+}
+
+/* 横屏优化 */
+@media (orientation: landscape) and (max-height: 600px) and (max-width: 768px) {
+    /* 横屏移动端专用控件布局 */
+    .mobile-control-bar {
+        width: 350px;
+        height: 40px;
+        padding: 3px;
+        bottom: 5px;
+        border-radius: 20px;
+        gap: 3px;
+    }
+    
+    .mobile-control-bar button {
+        padding: 6px 12px;
+        font-size: 10px;
+        height: 30px;
+        border-radius: 16px;
+    }
+    
+    .mobile-status {
+        width: 80px;
+        font-size: 7px;
+        padding: 4px;
+        top: 5px;
+        right: 5px;
+    }
+    
+    .mobile-track-info {
+        top: 5px;
+        left: 5px;
+    }
+    
+    .track-mini-icon {
+        width: 15px;
+        height: 15px;
+        font-size: 6px;
+        border-width: 1px;
+    }
+    
+    .mobile-input-panel {
+        padding: 8px;
+    }
+    
+    .mobile-input-panel input {
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .mobile-input-panel button {
+        padding: 8px;
+        font-size: 12px;
+    }
+    
+    .mobile-input-panel.show {
+        bottom: 50px;
+    }
+}
+
+/* 传统横屏优化 - 桌面端 */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 769px) {
+    #arduino-data {
+        font-size: 8px;
+        padding: 4px;
+        max-height: 30px;
+        line-height: 1.1;
+    }
+    
+    /* 侧边面板在横屏时自动收缩 */
+    .side-panel {
+        transform: translateY(-50%) scale(0.8);
+    }
+    
+    .panel-body {
+        width: 200px;
+    }
+    
+    .left-panel {
+        left: -200px;
+    }
+    
+    .right-panel {
+        right: -200px;
+    }
+    
+    .left-panel.expanded {
+        left: 5px;
+    }
+    
+    .right-panel.expanded {
+        right: 5px;
+    }
+    
+    /* 面板标签位置调整 */
+    .left-panel .panel-tab {
+        right: -29px;
+        width: 28px;
+        height: 60px;
+        font-size: 14px;
+    }
+    
+    .right-panel .panel-tab {
+        left: -29px;
+        width: 28px;
+        height: 60px;
+        font-size: 14px;
+    }
+    
+    /* 面板内容缩放 */
+    .panel-header h3 {
+        font-size: 14px;
+    }
+    
+    .panel-content {
+        padding: 10px;
+        font-size: 12px;
+    }
+    
+    .panel-content button {
+        font-size: 10px;
+        padding: 5px 8px;
+        margin: 2px 0;
+    }
+    
+    .track-legend li {
+        font-size: 10px;
+        margin: 2px 0;
+    }
+    
+    .track-color {
+        width: 10px;
+        height: 10px;
+        margin-right: 3px;
+    }
+    
+    /* 特殊处理游戏信息面板 */
+    #game-info {
+        top: 20%;
+    }
+    
+    /* 录制模态窗口适配 */
+    .modal-content {
+        min-width: 300px;
+        max-width: 400px;
+        padding: 15px;
+    }
+    
+    .modal-header h3 {
+        font-size: 16px;
+    }
+    
+    .modal-body p {
+        font-size: 12px;
+        margin-bottom: 10px;
+    }
+    
+    .modal-body input[type="text"] {
+        font-size: 12px;
+        padding: 8px;
+    }
+    
+    .modal-body .send-button {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+}
+
+/* 横屏小屏幕进一步优化 - 移动端 */
+@media (orientation: landscape) and (max-height: 500px) and (max-width: 768px) {
+    /* 进一步优化移动端控件 */
+    .mobile-control-bar {
+        width: 300px;
+        height: 35px;
+        padding: 2px;
+        bottom: 3px;
+        border-radius: 18px;
+        gap: 2px;
+    }
+    
+    .mobile-control-bar button {
+        padding: 5px 10px;
+        font-size: 9px;
+        height: 27px;
+        border-radius: 14px;
+    }
+    
+    .mobile-status {
+        width: 70px;
+        font-size: 6px;
+        padding: 3px;
+        top: 3px;
+        right: 3px;
+    }
+    
+    .mobile-track-info {
+        top: 3px;
+        left: 3px;
+    }
+    
+    .track-mini-icon {
+        width: 12px;
+        height: 12px;
+        font-size: 5px;
+        border-width: 1px;
+    }
+    
+    .mobile-input-panel {
+        padding: 6px;
+    }
+    
+    .mobile-input-panel input {
+        padding: 6px;
+        font-size: 11px;
+    }
+    
+    .mobile-input-panel button {
+        padding: 6px;
+        font-size: 11px;
+    }
+    
+    .mobile-input-panel.show {
+        bottom: 40px;
+    }
+}
+
+/* 横屏小屏幕进一步优化 - 桌面端 */
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 769px) {
+    /* 面板进一步缩小 */
+    .side-panel {
+        transform: translateY(-50%) scale(0.7);
+    }
+    
+    .panel-body {
+        width: 180px;
+    }
+    
+    .left-panel {
+        left: -180px;
+    }
+    
+    .right-panel {
+        right: -180px;
+    }
+    
+    .left-panel .panel-tab {
+        right: -26px;
+        width: 25px;
+        height: 50px;
+        font-size: 12px;
+    }
+    
+    .right-panel .panel-tab {
+        left: -26px;
+        width: 25px;
+        height: 50px;
+        font-size: 12px;
+    }
+    
+    #arduino-data {
+        font-size: 7px;
+        padding: 3px;
+        max-height: 25px;
+        line-height: 1.0;
+    }
+    
+    .panel-header h3 {
+        font-size: 12px;
+    }
+    
+    .panel-content {
+        padding: 8px;
+        font-size: 10px;
+    }
+    
+    .panel-content button {
+        font-size: 9px;
+        padding: 4px 6px;
+        margin: 1px 0;
+    }
+    
+    .track-legend li {
+        font-size: 8px;
+        margin: 1px 0;
+    }
+    
+    .track-color {
+        width: 8px;
+        height: 8px;
+        margin-right: 2px;
+    }
+    
+    /* 录制模态窗口进一步缩小 */
+    .modal-content {
+        min-width: 250px;
+        max-width: 350px;
+        padding: 12px;
+    }
+    
+    .modal-header h3 {
+        font-size: 14px;
+    }
+    
+    .modal-body p {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+    
+    .modal-body input[type="text"] {
+        font-size: 11px;
+        padding: 6px;
+    }
+    
+    .modal-body .send-button {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+}
+
+/* 居中状态显示组件 - 长条样式 */
+.mobile-status-center {
+    position: fixed;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    pointer-events: none;
+}
+
+.mobile-status-center .status-card {
+    pointer-events: auto;
+}
+
+.status-card {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 25px;
+    padding: 0 50px 0 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    color: white;
+    min-width: 200px;
+    max-width: 400px;
+    height: 50px;
+    animation: statusCardSlideIn 0.3s ease-out;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+@keyframes statusCardSlideIn {
+    from {
+        transform: scale(0.8) translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+.status-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+    font-size: 12px;
+}
+
+.status-label {
+    font-weight: 600;
+    opacity: 0.8;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.status-separator {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: bold;
+    margin: 0 5px;
+}
+
+#mobile-status-text,
+#mobile-arduino-data {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.close-status-btn {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-status-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .mobile-status-center {
+        top: 60px;
+    }
+    
+    .status-card {
+        margin: 0 20px;
+        min-width: auto;
+        max-width: calc(100% - 40px);
+        padding: 0 40px 0 15px;
+        height: 45px;
+    }
+    
+    .status-content {
+        gap: 10px;
+        font-size: 11px;
+    }
+    
+    .status-label {
+        font-size: 11px;
+    }
+    
+    #mobile-status-text,
+    #mobile-arduino-data {
+        font-size: 11px;
+        padding: 1px 6px;
+    }
+    
+    .close-status-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        right: 12px;
+    }
+}
+
+/* 右侧音符弹出框样式 */
+.note-popup-container {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 120px;
+    height: 100vh;
+    z-index: 500;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.note-popup {
+    position: absolute;
+    right: -100px;
+    width: 80px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #333;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-weight: bold;
+    font-size: 12px;
+    color: #333;
+}
+
+.note-popup.show {
+    right: 10px;
+    animation: noteSlideIn 0.5s ease-out;
+}
+
+.note-popup.hide {
+    right: -100px;
+    animation: noteSlideOut 0.3s ease-in;
+}
+
+.note-popup .note-name {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 2px;
+    color: #2c3e50;
+}
+
+.note-popup .note-frequency {
+    font-size: 10px;
+    color: #7f8c8d;
+}
+
+.note-popup .emotion-icon {
+    width: 24px;
+    height: 24px;
+    margin-top: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* 音符弹出动画 */
+@keyframes noteSlideIn {
+    0% {
+        right: -100px;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    50% {
+        right: 15px;
+        transform: scale(1.1);
+    }
+    100% {
+        right: 10px;
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes noteSlideOut {
+    0% {
+        right: 10px;
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        right: -100px;
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* 不同音符的颜色主题 */
+.note-popup.do { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); }
+.note-popup.re { background: linear-gradient(135deg, #4ecdc4, #7dd3d8); }
+.note-popup.mi { background: linear-gradient(135deg, #45b7d1, #6bb6ff); }
+.note-popup.fa { background: linear-gradient(135deg, #96ceb4, #b8e6d2); }
+.note-popup.sol { background: linear-gradient(135deg, #feca57, #ff9ff3); }
+.note-popup.la { background: linear-gradient(135deg, #ff9ff3, #feca57); }
+.note-popup.si { background: linear-gradient(135deg, #a8e6cf, #dcedc1); }
+.note-popup.do-high { background: linear-gradient(135deg, #ff8a80, #ffab91); }
+.note-popup.re-high { background: linear-gradient(135deg, #80d8ff, #84ffff); }
+.note-popup.mi-high { background: linear-gradient(135deg, #8c9eff, #b388ff); }
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .note-popup-container {
+        width: 100px;
+    }
+    
+    .note-popup {
+        width: 70px;
+        height: 50px;
+        font-size: 10px;
+    }
+    
+    .note-popup .note-name {
+        font-size: 12px;
+    }
+    
+    .note-popup .note-frequency {
+        font-size: 8px;
+    }
+    
+    .note-popup .emotion-icon {
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .note-popup-container {
+        width: 80px;
+    }
+    
+    .note-popup {
+        width: 60px;
+        height: 45px;
+        font-size: 9px;
+    }
+    
+    .note-popup .note-name {
+        font-size: 11px;
+    }
+    
+    .note-popup .note-frequency {
+        font-size: 7px;
+    }
+    
+    .note-popup .emotion-icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+/* 横屏模式适配 */
+@media (orientation: landscape) and (max-height: 600px) {
+    .note-popup-container {
+        width: 90px;
+    }
+    
+    .note-popup {
+        width: 65px;
+        height: 40px;
+        font-size: 9px;
+    }
+    
+    .note-popup .emotion-icon {
+        width: 16px;
+        height: 16px;
+    }
+} 

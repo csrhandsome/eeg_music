@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EEG音乐系统 - 欢迎页面</title>
+    <!-- 引入双层堆叠按钮样式 -->
+    <link rel="stylesheet" href="styles/stacked-button.css">
+    <!-- 引入背景样式 -->
+    <link rel="stylesheet" href="styles/body_background.css">
+    <!-- 引入背景增强脚本 -->
+    <script src="scripts/background_enhancer.js"></script>
     <style>
         * {
             margin: 0;
@@ -11,60 +17,36 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Arial', 'Microsoft YaHei', sans-serif;
-            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        @keyframes gradientBG {
-            0% {
-                background-position: 0% 50%;
-            }
-            50% {
-                background-position: 100% 50%;
-            }
-            100% {
-                background-position: 0% 50%;
-            }
-        }
 
         .welcome-container {
             text-align: center;
-            z-index: 10;
+            z-index: 10; /* 确保内容在背景之上 */
             position: relative;
         }
 
         .title {
-            font-size: 4rem;
+            font-size: 3rem;
             font-weight: bold;
-            color: white;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            color: #4a4a4a; /* 在浅色背景上，深色文字更易读 */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* 调整阴影以适应新背景 */
             margin-bottom: 20px;
             animation: glow 2s ease-in-out infinite alternate;
         }
 
         @keyframes glow {
             from {
-                text-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.5), 0 0 40px rgba(255, 255, 255, 0.5);
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.5), 0 0 15px rgba(255, 255, 255, 0.4), 0 0 20px rgba(255, 255, 255, 0.3);
             }
             to {
-                text-shadow: 0 0 30px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.8), 0 0 50px rgba(255, 255, 255, 0.8);
+                text-shadow: 0 0 15px rgba(255, 255, 255, 0.7), 0 0 25px rgba(255, 255, 255, 0.6), 0 0 35px rgba(255, 255, 255, 0.5);
             }
         }
 
         .subtitle {
             font-size: 1.5rem;
-            color: rgba(255, 255, 255, 0.9);
+            color: #5a5a5a; /* 调整颜色以适应新背景 */
             margin-bottom: 60px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3); /* 调整阴影 */
         }
 
         .button-container {
@@ -74,125 +56,22 @@
             align-items: center;
         }
 
-        .main-button {
-            position: relative;
-            padding: 20px 60px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            overflow: hidden;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
 
-        .start-button {
-            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
-            color: white;
-            animation: pulse 2s infinite;
-        }
 
-        .start-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.4);
-        }
-
-        .start-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .start-button:hover::before {
-            left: 100%;
-        }
-
-        .replay-button {
-            background: linear-gradient(45deg, #4ecdc4, #44a08d);
-            color: white;
-        }
-
-        .replay-button:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 50px rgba(78, 205, 196, 0.4);
-        }
-
-        .replay-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .replay-button:hover::before {
-            left: 100%;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            }
-            50% {
-                box-shadow: 0 8px 32px rgba(255, 107, 107, 0.6);
-            }
-            100% {
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            }
-        }
-
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            animation: float 6s infinite linear;
-        }
-
-        @keyframes float {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
+        /* 移除了 .main-button::after 和 @keyframes buttonBreathe，如果需要可以保留或修改 */
+        /* 如果希望按钮内部也有动态效果，可以保留并调整 .main-button::after 的样式 */
+        /* 例如，将其背景改为与新背景协调的颜色 */
         .loading {
             display: none;
-            color: white;
+            color: #4a4a4a; /* 调整颜色以适应新背景 */
             font-size: 1.2rem;
             margin-top: 20px;
         }
 
         .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            border: 3px solid rgba(74, 74, 74, 0.3); /* 调整颜色 */
             border-radius: 50%;
-            border-top: 3px solid white;
+            border-top: 3px solid #4a4a4a; /* 调整颜色 */
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
@@ -206,22 +85,32 @@
     </style>
 </head>
 <body>
-    <div class="particles" id="particles"></div>
-    
     <div class="welcome-container">
-        <h1 class="title">EEG音乐系统</h1>
-        <p class="subtitle">用脑电波创造美妙音乐</p>
+        <h1 class="title">用脑电波创造美妙音乐</h1>
         
         <div class="button-container">
-            <button class="main-button start-button" onclick="startMainProgram()">
-                开始演奏
+            <button class="stacked-button-container primary" onclick="startMainProgram()">
+                <div class="stacked-button-bottom"></div>
+                <div class="stacked-button-top">
+                    <div class="button-content">
+                        <img src="assets/music.svg" alt="音乐" style="width: 35px; height: 35px; margin-right: 8px; vertical-align: middle;" />
+                        开始演奏
+                    </div>
+                </div>
             </button>
             
-            <button class="main-button replay-button" onclick="goToReplay()">
-                回放音乐
+            <button class="stacked-button-container secondary" onclick="goToReplay()">
+                <div class="stacked-button-bottom"></div>
+                <div class="stacked-button-top">
+                    <div class="button-content">
+                        <img src="assets/history.svg" alt="历史记录" style="width: 35px; height: 35px; margin-right: 8px; vertical-align: middle;" />
+                        历史记录
+                    </div>
+                </div>
             </button>
         </div>
-        
+
+
         <div class="loading" id="loading">
             <div class="spinner"></div>
             正在启动系统...
@@ -229,27 +118,19 @@
     </div>
 
     <script>
-        // 创建粒子效果
-        function createParticles() {
-            const particlesContainer = document.getElementById('particles');
-            const particleCount = 50;
-
-            for (let i = 0; i < particleCount; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'particle';
-                particle.style.left = Math.random() * 100 + '%';
-                particle.style.animationDelay = Math.random() * 6 + 's';
-                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
-                particlesContainer.appendChild(particle);
-            }
-        }
+        // 移除了 createParticles 函数和 window.addEventListener('load', createParticles);
 
         function startMainProgram() {
             const loading = document.getElementById('loading');
             loading.style.display = 'block';
             
-            // 运行脚本
-            fetch('http://localhost:8766/run_script', {
+            // 动态获取服务器地址
+            const hostname = window.location.hostname;
+            const serverUrl = `http://${hostname}:8766/run_script`;
+            
+            console.log(`发送请求到: ${serverUrl}`);
+            
+            fetch(serverUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -259,24 +140,18 @@
             .then(response => response.json())
             .then(data => {
                 console.log('脚本执行结果:', data);
-                // 导向music_game_p5.html (P5.js卡通版本)
                 window.location.href = 'music_game_p5.html';
             })
             .catch(error => {
                 console.error('脚本执行失败:', error);
-                // 即使脚本执行失败也导向music_game_p5.html
                 window.location.href = 'music_game_p5.html';
             });
         }
 
         function goToReplay() {
-            // 导向replay.html（目前还未实现）
-            alert('回放功能即将上线，敬请期待！');
-            // window.location.href = 'replay.html';
+            window.location.href = 'history.html';
         }
 
-        // 页面加载完成后创建粒子
-        window.addEventListener('load', createParticles);
     </script>
 </body>
 </html>

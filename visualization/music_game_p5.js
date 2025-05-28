@@ -2,24 +2,26 @@
 class MusicGameVisualizationP5 {
     constructor() {
         this.socket = null;
-        this.tracks = [];
-        this.dropObjects = [];
-        this.hitEffects = [];
+        this.noteBlocks = [];
+        this.floatingEmotions = [];
         this.backgroundStars = [];
         this.clouds = [];
         
         // 游戏参数
-        this.trackCount = 4;
-        this.trackWidth = 120;
-        this.trackHeight = 600;
-        this.trackSpacing = 30;
-        this.dropDuration = 3000; // 下落动画持续时间(ms)
-        this.dropObjectSize = 50;
-        this.gameStartY = -250;
+        this.noteCount = 10; // 十个音符
+        this.noteBlockWidth = 80;
+        this.noteBlockHeight = 50;
+        this.noteBlockSpacing = 10;
+        this.svgDuration = 4000; // SVG飘动持续时间(ms)
+        this.svgSize = 60;
         
         // 重连计时器
         this.reconnectTimer = null;
         this.RECONNECT_INTERVAL = 3000; // 重连间隔3秒
+        
+        // 防止重复触发的时间间隔
+        this.lastTriggerTime = {};
+        this.TRIGGER_COOLDOWN = 500; // 500ms冷却时间
         
         // Arduino数据
         this.arduinoData = {
@@ -32,31 +34,53 @@ class MusicGameVisualizationP5 {
             button_state: 0,
             timestamp: 0
         };
-        
-        // 音阶频率数据 - 与Arduino保持一致
+        this.mindwaveData = {
+            attention: 0,
+            meditation: 0,
+            rawValue: 0,
+            delta: 0,
+            theta: 0,
+            lowAlpha: 0,
+            highAlpha: 0,
+            lowBeta: 0,
+            highBeta: 0,
+            lowGamma: 0,
+            midGamma: 0,
+            poorSignal: 0,
+        };
+        // 音阶频率数据 - 与Arduino保持一致，扩展到完整的音符范围
         this.scaleFrequencies = {
-            "C Major": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50],
-            "G Major": [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99, 880.00, 987.77, 1046.50, 1174.66, 1318.51, 1479.98, 1567.98],
-            "D Major": [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33, 659.25, 739.99, 783.99, 880.00, 987.77, 1108.73, 1174.66],
-            "E Minor": [329.63, 369.99, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99, 880.00, 987.77, 1046.50, 1174.66, 1318.51],
-            "A Minor": [440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50, 1174.66, 1318.51, 1396.91, 1567.98, 1760.00]
+            "C Major": [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25],
+            "G Major": [392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99, 880.00, 987.77],
+            "D Major": [293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33, 659.25, 739.99],
+            "E Minor": [329.63, 369.99, 392.00, 440.00, 493.88, 523.25, 587.33, 659.25, 739.99, 783.99],
+            "A Minor": [440.00, 493.88, 523.25, 587.33, 659.25, 698.46, 783.99, 880.00, 987.77, 1046.50]
         };
         
-        // 卡通风格轨道颜色 - 更明亮更饱和
-        this.trackColors = [
-            [255, 99, 132],   // 粉红色 
-            [75, 192, 192],   // 青绿色
-            [54, 162, 235],   // 蓝色
-            [255, 206, 86]    // 黄色
-        ];
+        // 音符名称映射 - do, re, mi, fa, sol, la, si, do#, re#, mi#
+        this.noteNames = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si', 'do#', 're#', 'mi#'];
         
-        // 卡通下落物形状和颜色
-        this.dropShapes = [
-            { type: 'star', color: [255, 223, 0] },      // 金色星星
-            { type: 'heart', color: [255, 105, 180] },   // 粉色爱心
-            { type: 'diamond', color: [138, 43, 226] },  // 紫色钻石
-            { type: 'flower', color: [50, 205, 50] }     // 绿色花朵
-        ];
+        // 情绪PNG映射 - 只存储路径，不在构造函数中加载
+        this.emotionPNGs = {
+            0: 'assets/emotion/happy.png',    // 快乐
+            1: 'assets/emotion/sad.png',      // 悲伤  
+            2: 'assets/emotion/anger.png',    // 愤怒
+            3: 'assets/emotion/peace.png'     // 平静
+        };
+        
+        this.emotionNames = {
+            0: '快乐',
+            1: '悲伤', 
+            2: '愤怒',
+            3: '平静'
+        };
+        
+        // 音符块颜色 - 白色为主
+        this.noteBlockColor = [255, 255, 255];
+        this.noteBlockActiveColor = [255, 255, 100]; // 激活时的颜色
+        
+        // 预加载情绪SVG图像
+        this.emotionImages = {};
         
         // 背景装饰
         this.rainbowColors = [
@@ -69,44 +93,48 @@ class MusicGameVisualizationP5 {
     
     init() {
         this.setupWebSocket();
-        this.createTracks();
+        this.createNoteBlocks();
         this.createBackgroundElements();
+        // 注意：SVG图像将在P5.js的preload阶段加载
     }
     
-    createTracks() {
-        this.tracks = [];
+    
+    createNoteBlocks() {
+        this.noteBlocks = [];
         
-        // 根据屏幕大小调整轨道参数
+        // 根据屏幕大小调整音符块参数
         const isMobile = window.innerWidth <= 768;
         const isLandscape = window.innerWidth > window.innerHeight;
         
         if (isMobile) {
-            this.trackWidth = isLandscape ? 80 : 90;
-            this.trackHeight = isLandscape ? 400 : 500;
-            this.trackSpacing = isLandscape ? 15 : 20;
-            this.gameStartY = isLandscape ? -180 : -220;
+            this.noteBlockWidth = isLandscape ? 60 : 70;
+            this.noteBlockHeight = isLandscape ? 50 : 60; // 增加高度
+            this.noteBlockSpacing = 0; // 贴在一起，间距为0
         } else {
-            this.trackWidth = 120;
-            this.trackHeight = 600;
-            this.trackSpacing = 30;
-            this.gameStartY = -250;
+            this.noteBlockWidth = 80;
+            this.noteBlockHeight = 70; // 增加高度
+            this.noteBlockSpacing = 0; // 贴在一起，间距为0
         }
         
-        for (let i = 0; i < this.trackCount; i++) {
-            // 居中计算轨道位置
-            const totalWidth = this.trackCount * this.trackWidth + (this.trackCount - 1) * this.trackSpacing;
-            const startX = -totalWidth / 2 + this.trackWidth / 2;
-            const x = startX + i * (this.trackWidth + this.trackSpacing);
-            
-            this.tracks.push({
-                x: x,
-                y: this.gameStartY,
-                width: this.trackWidth,
-                height: this.trackHeight,
-                color: this.trackColors[i],
-                shape: this.dropShapes[i],
-                bounce: 0, // 用于弹跳动画
-                glow: 0    // 用于发光效果
+        // 计算右侧音符块位置
+        const containerHeight = window.innerHeight;
+        const totalHeight = this.noteCount * this.noteBlockHeight + (this.noteCount - 1) * this.noteBlockSpacing;
+        const startY = (containerHeight - totalHeight) / 2;
+        const rightX = window.innerWidth - this.noteBlockWidth - 20; // 修复：距离右边20px
+        
+        for (let i = 0; i < this.noteCount; i++) {
+            // 计算y坐标：从下往上排列，所以最高音符在最上面,对于html坐标的最上面
+            const y = startY + (this.noteCount - 1 - i) * (this.noteBlockHeight + this.noteBlockSpacing);
+            this.noteBlocks.push({
+                x: rightX,
+                y: y,
+                width: this.noteBlockWidth,
+                height: this.noteBlockHeight,
+                noteName: this.noteNames[i],
+                noteIndex: i,
+                active: false,
+                activationTime: 0,
+                glow: 0
             });
         }
     }
@@ -123,24 +151,12 @@ class MusicGameVisualizationP5 {
                 speed: random(0.02, 0.05)
             });
         }
-        
-        // 创建云朵
-        this.clouds = [];
-        for (let i = 0; i < 5; i++) {
-            this.clouds.push({
-                x: random(-500, 500),
-                y: random(-200, -100),
-                size: random(40, 80),
-                speed: random(0.3, 0.8),
-                opacity: random(100, 200)
-            });
-        }
     }
     
-    // 根据当前音阶和频率映射到轨道
-    mapFrequencyToTrack(frequency, currentScale) {
+    // 根据当前音阶和频率映射到音符索引
+    mapFrequencyToNote(frequency, currentScale) {
         const scaleFreqs = this.scaleFrequencies[currentScale];
-        if (!scaleFreqs) return 0; // 默认轨道0
+        if (!scaleFreqs) return 0; // 默认音符0
         
         // 找到最接近的音符
         let minDiff = Infinity;
@@ -154,541 +170,335 @@ class MusicGameVisualizationP5 {
             }
         }
         
-        // 将15个音符映射到4个轨道
-        if (noteIndex < 4) return 0;      // 低音区 -> 轨道1
-        else if (noteIndex < 8) return 1; // 中低音区 -> 轨道2  
-        else if (noteIndex < 12) return 2; // 中高音区 -> 轨道3
-        else return 3;                     // 高音区 -> 轨道4
+        return noteIndex;
     }
     
-    // 创建下落物
-    createDropObject(trackIndex, frequency) {
-        if (trackIndex < 0 || trackIndex >= this.tracks.length) return;
+    // 创建飘动的情绪SVG
+    createFloatingEmotion(noteIndex, frequency) {
+        if (noteIndex < 0 || noteIndex >= this.noteBlocks.length) return;
         
-        const track = this.tracks[trackIndex];
+        // 防止重复触发：检查冷却时间
+        const currentTime = millis();
+        const lastTime = this.lastTriggerTime[noteIndex] || 0;
+        if (currentTime - lastTime < this.TRIGGER_COOLDOWN) {
+            return; // 还在冷却期，不创建新的SVG
+        }
+        this.lastTriggerTime[noteIndex] = currentTime;
         
-        // 根据频率调整下落物大小
-        const sizeScale = map(constrain(frequency, 200, 1800), 200, 1800, 0.7, 1.2);
-        const size = this.dropObjectSize * sizeScale;
+        const noteBlock = this.noteBlocks[noteIndex];
+        const currentEmotion = this.mindwaveData.mood || 0;
         
-        const dropObject = {
-            trackIndex: trackIndex,
-            x: track.x,
-            y: track.y - 20,
+        // 根据频率调整SVG大小
+        const sizeScale = map(constrain(frequency, 200, 1800), 200, 1800, 0.8, 1.3);
+        const size = this.svgSize * sizeScale;
+        
+        const floatingEmotion = {
+            noteIndex: noteIndex,
+            // 从音符块位置开始
+            x: noteBlock.x + noteBlock.width / 2,
+            y: noteBlock.y + noteBlock.height / 2,
             size: size,
             frequency: frequency,
             startTime: millis(),
-            targetY: track.y + track.height - 50,
+            targetX: -size, // 飘到屏幕左边外
             rotation: 0,
-            bounce: 0,
-            trail: [], // 拖尾效果
+            rotationSpeed: random(-0.02, 0.02),
             active: true,
-            shape: track.shape
+            emotion: currentEmotion,
+            // 固定波浪形飘动路径参数
+            waveAmplitude: 30, // 固定波浪幅度
+            waveFrequency: 0.01, // 固定波浪频率
+            initialY: noteBlock.y + noteBlock.height / 2, // 记录初始Y位置
+            wavePhase: 0 // 波浪相位
         };
         
-        this.dropObjects.push(dropObject);
+        this.floatingEmotions.push(floatingEmotion);
         
-        // 轨道发光效果
-        track.glow = 255;
+        // 激活对应的音符块 - 只是简单的过渡效果
+        noteBlock.active = true;
+        noteBlock.activationTime = millis();
+        noteBlock.glow = 255;
+        
+        console.log(`创建飘动情绪: 音符${noteIndex}, 情绪${currentEmotion}, 位置(${floatingEmotion.x}, ${floatingEmotion.y})`);
     }
     
-    // 创建击中效果
-    createHitEffect(trackIndex) {
-        if (trackIndex < 0 || trackIndex >= this.tracks.length) return;
-        
-        const track = this.tracks[trackIndex];
-        
-        // 创建卡通爆炸粒子效果
-        const particles = [];
-        for (let i = 0; i < 15; i++) {
-            const angle = (i / 15) * TWO_PI;
-            const speed = random(3, 8);
-            particles.push({
-                x: track.x,
-                y: track.y + track.height - 50,
-                vx: cos(angle) * speed,
-                vy: sin(angle) * speed - random(1, 3), // 向上飞溅
-                life: 1.0,
-                size: random(4, 12),
-                color: [...this.rainbowColors[i % this.rainbowColors.length]],
-                rotation: random(0, TWO_PI),
-                rotationSpeed: random(-0.2, 0.2)
-            });
-        }
-        
-        // 添加爱心粒子
-        for (let i = 0; i < 5; i++) {
-            const angle = random(0, TWO_PI);
-            const speed = random(2, 5);
-            particles.push({
-                x: track.x,
-                y: track.y + track.height - 50,
-                vx: cos(angle) * speed,
-                vy: sin(angle) * speed - random(2, 4),
-                life: 1.0,
-                size: random(8, 16),
-                color: [255, 105, 180],
-                type: 'heart',
-                rotation: 0,
-                rotationSpeed: random(-0.1, 0.1)
-            });
-        }
-        
-        const effect = {
-            particles: particles,
-            startTime: millis(),
-            duration: 800,
-            trackIndex: trackIndex,
-            active: true
-        };
-        
-        this.hitEffects.push(effect);
-        
-        // 轨道弹跳效果
-        track.bounce = 20;
-    }
-    
-    // 绘制轨道 - 卡通2D风格
-    drawTracks() {
-        for (let i = 0; i < this.tracks.length; i++) {
-            const track = this.tracks[i];
+    // 绘制右侧音符块
+    drawNoteBlocks() {
+        for (let i = 0; i < this.noteBlocks.length; i++) {
+            const block = this.noteBlocks[i];
             
             // 更新动画效果
-            if (track.bounce > 0) {
-                track.bounce *= 0.9; // 弹跳衰减
+            if (block.glow > 0) {
+                block.glow *= 0.95; // 发光衰减
             }
-            if (track.glow > 0) {
-                track.glow *= 0.95; // 发光衰减
+            
+            // 修复：简化激活动画效果，像钢琴按键一样
+            let scaleEffect = 1.0;
+            let yOffset = 0;
+            if (block.active) {
+                const elapsed = millis() - block.activationTime;
+                if (elapsed < 300) { // 激活动画持续300ms
+                    // 简单的按下效果
+                    const progress = elapsed / 300;
+                    yOffset = sin(progress * PI) * 2; // 轻微下压效果
+                    scaleEffect = 1.0 + sin(progress * PI) * 0.03; // 轻微缩放
+                } else {
+                    block.active = false;
+                }
             }
             
             push();
-            translate(track.x, track.y + track.bounce);
+            translate(block.x + block.width/2, block.y + block.height/2 + yOffset);
+            scale(scaleEffect);
             
-            // 3D纵深透视变换 - 根据屏幕大小调整
-            const isMobile = window.innerWidth <= 768;
-            const perspectiveAngle = isMobile ? -20 : -15; // 移动端更大的倾斜角度
-            const scaleTop = isMobile ? 0.6 : 0.7; // 移动端更强的透视效果
-            const scaleBottom = 1.0; // 底部缩放比例
+            // 绘制主体 - 透明的音符块
+            if (block.active) {
+                // 激活时稍微可见
+                fill(255, 255, 255, 100);
+            } else {
+                // 平时完全透明
+                fill(255, 255, 255, 100);
+            }
+            stroke(255, 255, 255, 100);
+            strokeWeight(2);
+            rect(-block.width/2, -block.height/2, block.width, block.height, 8);
             
-            // 绘制3D轨道阴影 - 增强纵深感
-            fill(0, 0, 0, 80);
-            noStroke();
-            this.drawPerspectiveRect(-track.width/2 + 5, 5, track.width, track.height, 
-                                     scaleTop, scaleBottom, perspectiveAngle, 15);
-            
-            // 绘制主轨道 - 3D透视矩形
-            fill(track.color[0], track.color[1], track.color[2], 140);
-            stroke(255);
-            strokeWeight(3);
-            this.drawPerspectiveRect(-track.width/2, 0, track.width, track.height, 
-                                     scaleTop, scaleBottom, perspectiveAngle, 15);
-            
-            // 绘制发光效果
-            if (track.glow > 0) {
-                drawingContext.shadowColor = `rgba(${track.color[0]}, ${track.color[1]}, ${track.color[2]}, ${track.glow/255})`;
-                drawingContext.shadowBlur = 25;
-                stroke(track.color[0], track.color[1], track.color[2], track.glow);
-                strokeWeight(6);
-                noFill();
-                this.drawPerspectiveRect(-track.width/2, 0, track.width, track.height, 
-                                         scaleTop, scaleBottom, perspectiveAngle, 15);
+            // 绘制发光效果 - 根据当前情绪设置颜色
+            if (block.glow > 0) {
+                const currentEmotion = this.mindwaveData.mood || 0;
+                let glowColor;
+                
+                switch(currentEmotion) {
+                    case 0: // happy - fcc68f
+                        glowColor = [252, 198, 143];
+                        break;
+                    case 1: // sad - cee9f5  
+                        glowColor = [206, 233, 245];
+                        break;
+                    case 2: // anger - FDA598
+                        glowColor = [253, 165, 152];
+                        break;
+                    case 3: // peace - e1d6f5
+                        glowColor = [225, 214, 245];
+                        break;
+                    default:
+                        glowColor = [255, 255, 100]; // 默认黄色
+                }
+                
+                drawingContext.shadowColor = `rgba(${glowColor[0]}, ${glowColor[1]}, ${glowColor[2]}, ${block.glow/255})`;
+                drawingContext.shadowBlur = 15;
+                fill(glowColor[0], glowColor[1], glowColor[2], block.glow);
+                stroke(glowColor[0], glowColor[1], glowColor[2], block.glow);
+                strokeWeight(4);
+                rect(-block.width/2, -block.height/2, block.width, block.height, 8);
                 drawingContext.shadowBlur = 0;
             }
             
-            // 绘制3D轨道内部装饰条纹 - 透视线条
-            stroke(255, 255, 255, 120);
-            strokeWeight(2);
-            for (let j = 1; j < 4; j++) {
-                const stripeY = (track.height / 4) * j;
-                const progress = j / 4;
-                const currentScale = lerp(scaleTop, scaleBottom, progress);
-                const currentWidth = track.width * currentScale;
-                const offsetY = sin(radians(perspectiveAngle)) * stripeY * 0.3;
-                
-                line(-currentWidth/2 + 10, stripeY + offsetY, 
-                     currentWidth/2 - 10, stripeY + offsetY);
-            }
-            
-            // 绘制轨道标签 - 可爱字体
-            fill(255);
-            stroke(track.color[0], track.color[1], track.color[2]);
-            strokeWeight(2);
-            textAlign(CENTER, CENTER);
-            textSize(16);
-            textStyle(BOLD);
-            text(`♪${i + 1}`, 0, -30);
-            
-            // 绘制底部目标区域 - 3D彩虹效果
-            const targetY = track.height - 70;
-            const targetHeight = 50;
-            
-            // 3D彩虹渐变效果
-            for (let k = 0; k < 6; k++) {
-                const rainbowColor = this.rainbowColors[k];
-                fill(rainbowColor[0], rainbowColor[1], rainbowColor[2], 170);
-                noStroke();
-                const segmentHeight = targetHeight / 6;
-                const segmentY = targetY + k * segmentHeight;
-                const progress = (segmentY - targetY) / targetHeight;
-                const currentScale = lerp(scaleTop, scaleBottom, (targetY + progress * targetHeight) / track.height);
-                const currentWidth = (track.width - 10) * currentScale;
-                const offsetY = sin(radians(perspectiveAngle)) * segmentY * 0.3;
-                
-                this.drawPerspectiveSegment(-currentWidth/2, segmentY + offsetY, 
-                                           currentWidth, segmentHeight, progress, 5);
-            }
-            
-            // 3D目标区域边框
-            noFill();
-            stroke(255);
-            strokeWeight(4);
-            const targetProgress = targetY / track.height;
-            const targetScale = lerp(scaleTop, scaleBottom, targetProgress);
-            const targetWidth = (track.width - 10) * targetScale;
-            const targetOffsetY = sin(radians(perspectiveAngle)) * targetY * 0.3;
-            
-            this.drawPerspectiveRect(-targetWidth/2, targetY + targetOffsetY, 
-                                     targetWidth, targetHeight, 
-                                     scaleTop, scaleBottom, perspectiveAngle, 10);
-            
-            // 目标区域文字 - 3D效果
-            fill(255);
-            stroke(0);
-            strokeWeight(2);
+            // 绘制音符名称
+            fill(0,0,0);
+            noStroke();
             textAlign(CENTER, CENTER);
             textSize(14);
             textStyle(BOLD);
-            text("TARGET", 0, targetY + targetHeight/2 + targetOffsetY);
+            text(block.noteName.toUpperCase(), 0, 0);
             
             pop();
         }
     }
     
-    // 绘制透视矩形的辅助方法
-    drawPerspectiveRect(x, y, w, h, scaleTop, scaleBottom, angle, cornerRadius) {
-        const topWidth = w * scaleTop;
-        const bottomWidth = w * scaleBottom;
-        const angleOffset = sin(radians(angle)) * h * 0.3;
-        
-        beginShape();
-        // 顶部边
-        vertex(x + (w - topWidth) / 2, y);
-        vertex(x + (w + topWidth) / 2, y);
-        // 右边
-        vertex(x + (w + bottomWidth) / 2, y + h + angleOffset);
-        // 底部边  
-        vertex(x + (w - bottomWidth) / 2, y + h + angleOffset);
-        endShape(CLOSE);
-    }
-    
-    // 绘制透视段落的辅助方法
-    drawPerspectiveSegment(x, y, w, h, progress, cornerRadius) {
-        push();
-        fill(red(color(...this.rainbowColors[Math.floor(progress * 6)])), 
-             green(color(...this.rainbowColors[Math.floor(progress * 6)])), 
-             blue(color(...this.rainbowColors[Math.floor(progress * 6)])), 170);
-        noStroke();
-        rect(x, y, w, h, cornerRadius);
-        pop();
-    }
-    
-    // 更新下落物
-    updateDropObjects() {
-        for (let i = this.dropObjects.length - 1; i >= 0; i--) {
-            const drop = this.dropObjects[i];
-            if (!drop.active) continue;
-            
-            const elapsed = millis() - drop.startTime;
-            const progress = elapsed / this.dropDuration;
-            
-            if (progress >= 1.0) {
-                // 到达底部
-                this.createHitEffect(drop.trackIndex);
-                this.dropObjects.splice(i, 1);
+    // 更新飘动的情绪SVG
+    updateFloatingEmotions() {
+        for (let i = this.floatingEmotions.length - 1; i >= 0; i--) {
+            const emotion = this.floatingEmotions[i];
+            if (!emotion.active) {
+                this.floatingEmotions.splice(i, 1);
                 continue;
             }
             
-            // 更新位置（使用弹性缓动）
-            const easeProgress = 1 - pow(1 - progress, 3); // easeOutCubic
-            drop.y = lerp(drop.y, drop.targetY, easeProgress * 0.05 + 0.02);
+            const elapsed = millis() - emotion.startTime;
+            const progress = elapsed / this.svgDuration;
             
-            // 添加轻微的左右摆动
-            drop.x = this.tracks[drop.trackIndex].x + sin(millis() * 0.01 + drop.startTime * 0.001) * 5;
-            
-            // 更新旋转和弹跳
-            drop.rotation += 0.1;
-            drop.bounce = sin(millis() * 0.02) * 3;
-            
-            // 更新拖尾
-            drop.trail.push({x: drop.x, y: drop.y, life: 1.0});
-            if (drop.trail.length > 8) {
-                drop.trail.shift();
+            // 检查是否应该移除
+            if (progress >= 1.0 || emotion.x <= emotion.targetX) {
+                emotion.active = false;
+                this.floatingEmotions.splice(i, 1);
+                console.log(`移除飘动情绪: 索引${i}`);
+                continue;
             }
             
-            // 更新拖尾生命周期
-            for (let t of drop.trail) {
-                t.life *= 0.85;
-            }
+            // 水平移动：从音符块位置到屏幕左边
+            const startX = this.noteBlocks[emotion.noteIndex].x + this.noteBlocks[emotion.noteIndex].width / 2;
+            emotion.x = lerp(startX, emotion.targetX, progress);
+            
+            // 固定波浪形飘动路径
+            const waveOffset = sin(emotion.x * emotion.waveFrequency) * emotion.waveAmplitude;
+            emotion.y = emotion.initialY + waveOffset;
+            
+            // 更新旋转
+            emotion.rotation += emotion.rotationSpeed;
+            
+            // 边界检查，防止飘出屏幕上下边界
+            emotion.y = constrain(emotion.y, emotion.size/2, height - emotion.size/2);
         }
     }
     
-    // 绘制下落物 - 卡通形状
-    drawDropObjects() {
-        for (const drop of this.dropObjects) {
-            if (!drop.active) continue;
+    // 绘制飘动的情绪SVG
+    drawFloatingEmotions() {
+        for (const emotion of this.floatingEmotions) {
+            if (!emotion.active) continue;
             
-            // 绘制拖尾
-            for (let i = 0; i < drop.trail.length; i++) {
-                const t = drop.trail[i];
-                push();
-                fill(drop.shape.color[0], drop.shape.color[1], drop.shape.color[2], t.life * 100);
+            push();
+            translate(emotion.x, emotion.y);
+            rotate(emotion.rotation);
+            
+            // 获取对应的图像
+            const imageToDraw = this.emotionImages[emotion.emotion];
+            
+            // 检查图像是否已加载且有效
+            if (this.emotionImagesLoaded && imageToDraw && typeof imageToDraw === 'object' && imageToDraw.width > 0) {
+                // 显示PNG图像
+                try {
+                    imageMode(CENTER);
+                    image(imageToDraw, 0, 0, emotion.size, emotion.size);
+                } catch (error) {
+                    console.error('绘制情绪图像时出错:', error);
+                    // 如果绘制失败，显示备用图形
+                    this.drawFallbackEmotion(emotion);
+                }
+            } else {
+                // 如果PNG未加载或加载失败，显示简单的几何图形作为备用
+                this.drawFallbackEmotion(emotion);
+            }
+            
+            pop();
+        }
+    }
+    
+    // 绘制备用情绪图形的辅助方法
+    drawFallbackEmotion(emotion) {
+        fill(255, 255, 255, 200);
+        stroke(100);
+        strokeWeight(2);
+        const symbolSize = emotion.size;
+        switch(emotion.emotion) {
+            case 0: // 快乐
+                // 画一个简单的笑脸
+                ellipse(0, 0, symbolSize);
+                fill(0);
                 noStroke();
-                const trailSize = (drop.size * 0.3) * t.life;
-                ellipse(t.x, t.y, trailSize);
-                pop();
-            }
-            
-            push();
-            translate(drop.x, drop.y + drop.bounce);
-            rotate(drop.rotation);
-            
-            // 绘制形状阴影
-            fill(0, 0, 0, 100);
-            noStroke();
-            this.drawShape(drop.shape.type, 2, 2, drop.size);
-            
-            // 绘制主形状
-            fill(drop.shape.color[0], drop.shape.color[1], drop.shape.color[2]);
-            stroke(255);
-            strokeWeight(3);
-            this.drawShape(drop.shape.type, 0, 0, drop.size);
-            
-            // 添加高光效果
-            fill(255, 255, 255, 150);
-            noStroke();
-            this.drawShape(drop.shape.type, -drop.size * 0.15, -drop.size * 0.15, drop.size * 0.3);
-            
-            pop();
-        }
-    }
-    
-    // 绘制卡通形状
-    drawShape(type, x, y, size) {
-        push();
-        translate(x, y);
-        
-        switch(type) {
-            case 'star':
-                this.drawStar(0, 0, size * 0.4, size * 0.2, 5);
+                ellipse(-symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                ellipse(symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                stroke(0);
+                strokeWeight(2);
+                noFill();
+                arc(0, symbolSize*0.05, symbolSize*0.3, symbolSize*0.2, 0, PI);
                 break;
-            case 'heart':
-                this.drawHeart(0, 0, size * 0.8);
+            case 1: // 悲伤
+                // 画一个哭脸
+                ellipse(0, 0, symbolSize);
+                fill(0);
+                noStroke();
+                ellipse(-symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                ellipse(symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                stroke(0);
+                strokeWeight(2);
+                noFill();
+                arc(0, symbolSize*0.15, symbolSize*0.3, symbolSize*0.2, PI, TWO_PI);
                 break;
-            case 'diamond':
-                this.drawDiamond(0, 0, size * 0.8);
+            case 2: // 愤怒
+                // 画一个愤怒符号
+                fill(255, 100, 100);
+                ellipse(0, 0, symbolSize);
+                fill(0);
+                noStroke();
+                rect(-symbolSize*0.2, -symbolSize*0.05, symbolSize*0.4, symbolSize*0.1);
+                rect(-symbolSize*0.05, -symbolSize*0.2, symbolSize*0.1, symbolSize*0.4);
                 break;
-            case 'flower':
-                this.drawFlower(0, 0, size * 0.7);
+            case 3: // 平静
+                // 画一个平静符号
+                fill(150, 255, 150);
+                ellipse(0, 0, symbolSize);
+                fill(0);
+                noStroke();
+                ellipse(-symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                ellipse(symbolSize*0.15, -symbolSize*0.1, symbolSize*0.08);
+                ellipse(0, symbolSize*0.05, symbolSize*0.15, symbolSize*0.08);
                 break;
-            default:
-                ellipse(0, 0, size);
-        }
-        
-        pop();
-    }
-    
-    // 绘制星星
-    drawStar(x, y, radius1, radius2, npoints) {
-        let angle = TWO_PI / npoints;
-        let halfAngle = angle / 2.0;
-        beginShape();
-        for (let a = 0; a < TWO_PI; a += angle) {
-            let sx = x + cos(a) * radius1;
-            let sy = y + sin(a) * radius1;
-            vertex(sx, sy);
-            sx = x + cos(a + halfAngle) * radius2;
-            sy = y + sin(a + halfAngle) * radius2;
-            vertex(sx, sy);
-        }
-        endShape(CLOSE);
-    }
-    
-    // 绘制爱心
-    drawHeart(x, y, size) {
-        beginShape();
-        vertex(x, y);
-        bezierVertex(x - size/2, y - size/2, x - size, y + size/3, x, y + size);
-        bezierVertex(x + size, y + size/3, x + size/2, y - size/2, x, y);
-        endShape(CLOSE);
-    }
-    
-    // 绘制钻石
-    drawDiamond(x, y, size) {
-        beginShape();
-        vertex(x, y - size/2);
-        vertex(x + size/3, y);
-        vertex(x, y + size/2);
-        vertex(x - size/3, y);
-        endShape(CLOSE);
-    }
-    
-    // 绘制花朵
-    drawFlower(x, y, size) {
-        push();
-        translate(x, y);
-        
-        // 花瓣
-        for (let i = 0; i < 6; i++) {
-            push();
-            rotate(i * PI / 3);
-            ellipse(0, -size/3, size/3, size/2);
-            pop();
-        }
-        
-        // 花心
-        fill(255, 223, 0);
-        ellipse(0, 0, size/3);
-        
-        pop();
-    }
-    
-    // 更新击中效果
-    updateHitEffects() {
-        for (let i = this.hitEffects.length - 1; i >= 0; i--) {
-            const effect = this.hitEffects[i];
-            if (!effect.active) continue;
-            
-            const elapsed = millis() - effect.startTime;
-            const progress = elapsed / effect.duration;
-            
-            if (progress >= 1.0) {
-                this.hitEffects.splice(i, 1);
-                continue;
-            }
-            
-            // 更新粒子
-            for (const particle of effect.particles) {
-                particle.x += particle.vx;
-                particle.y += particle.vy;
-                particle.vx *= 0.98; // 空气阻力
-                particle.vy += 0.2;  // 重力
-                particle.life = 1.0 - progress;
-                particle.rotation += particle.rotationSpeed;
-                particle.size *= 0.995; // 粒子收缩
-            }
-        }
-    }
-    
-    // 绘制击中效果 - 卡通风格
-    drawHitEffects() {
-        for (const effect of this.hitEffects) {
-            if (!effect.active) continue;
-            
-            const track = this.tracks[effect.trackIndex];
-            
-            // 绘制粒子
-            for (const particle of effect.particles) {
-                push();
-                translate(particle.x, particle.y);
-                rotate(particle.rotation);
-                
-                fill(particle.color[0], particle.color[1], particle.color[2], particle.life * 255);
-                stroke(255, 255, 255, particle.life * 150);
-                strokeWeight(1);
-                
-                if (particle.type === 'heart') {
-                    this.drawHeart(0, 0, particle.size);
-                } else {
-                    // 星星粒子
-                    this.drawStar(0, 0, particle.size * 0.4, particle.size * 0.2, 5);
-                }
-                
-                pop();
-            }
-            
-            // 中心闪光效果 - 更卡通化
-            const elapsed = millis() - effect.startTime;
-            if (elapsed < 300) {
-                const flashProgress = elapsed / 300;
-                push();
-                translate(track.x, track.y + track.height - 50);
-                
-                // 彩虹圆环效果
-                for (let i = 0; i < 6; i++) {
-                    const ringColor = this.rainbowColors[i];
-                    fill(ringColor[0], ringColor[1], ringColor[2], (1 - flashProgress) * 200);
-                    noStroke();
-                    
-                    const ringSize = lerp(10, 60, flashProgress) + i * 5;
-                    ellipse(0, 0, ringSize);
-                }
-                
-                // 中心白光
-                fill(255, 255, 255, (1 - flashProgress) * 255);
-                ellipse(0, 0, lerp(5, 25, flashProgress));
-                
-                pop();
-            }
         }
     }
     
     // 绘制背景装饰
     drawBackground() {
         // 更新云朵位置
-        for (let cloud of this.clouds) {
-            cloud.x += cloud.speed;
-            if (cloud.x > width/2 + 100) {
-                cloud.x = -width/2 - 100;
-            }
-        }
+        // for (let cloud of this.clouds) {
+        //     cloud.x += cloud.speed;
+        //     if (cloud.x > width/2 + 100) {
+        //         cloud.x = -width/2 - 100;
+        //     }
+        // }
         
-        // 绘制云朵
-        for (let cloud of this.clouds) {
-            push();
-            translate(cloud.x, cloud.y);
-            fill(255, 255, 255, cloud.opacity);
-            noStroke();
+        // // 绘制云朵
+        // for (let cloud of this.clouds) {
+        //     push();
+        //     translate(cloud.x, cloud.y);
+        //     fill(255, 255, 255, cloud.opacity);
+        //     noStroke();
             
-            // 简单的云朵形状
-            ellipse(0, 0, cloud.size);
-            ellipse(-cloud.size * 0.3, 0, cloud.size * 0.7);
-            ellipse(cloud.size * 0.3, 0, cloud.size * 0.7);
-            ellipse(0, -cloud.size * 0.3, cloud.size * 0.8);
+        //     // 简单的云朵形状
+        //     ellipse(0, 0, cloud.size);
+        //     ellipse(-cloud.size * 0.3, 0, cloud.size * 0.7);
+        //     ellipse(cloud.size * 0.3, 0, cloud.size * 0.7);
+        //     ellipse(0, -cloud.size * 0.3, cloud.size * 0.8);
             
-            pop();
-        }
+        //     pop();
+        // }
         
         // 绘制背景星星
-        for (let star of this.backgroundStars) {
-            star.twinkle += star.speed;
+        // for (let star of this.backgroundStars) {
+        //     star.twinkle += star.speed;
             
-            push();
-            translate(star.x, star.y);
+        //     push();
+        //     translate(star.x, star.y);
             
-            const brightness = (sin(star.twinkle) + 1) * 0.5;
-            fill(255, 255, 200, brightness * 200);
-            noStroke();
+        //     const brightness = (sin(star.twinkle) + 1) * 0.5;
+        //     fill(255, 255, 200, brightness * 200);
+        //     noStroke();
             
-            this.drawStar(0, 0, star.size, star.size * 0.4, 5);
+        //     // 简单的星星形状
+        //     beginShape();
+        //     for (let i = 0; i < 10; i++) {
+        //         const angle = (i / 10) * TWO_PI;
+        //         const radius = (i % 2 === 0) ? star.size : star.size * 0.4;
+        //         const x = cos(angle) * radius;
+        //         const y = sin(angle) * radius;
+        //         vertex(x, y);
+        //     }
+        //     endShape(CLOSE);
             
-            pop();
-        }
+        //     pop();
+        // }
     }
     
     // 处理Arduino数据
     processArduinoData(data) {
         this.arduinoData = { ...this.arduinoData, ...data };
         
-        // 如果有有效的频率和音阶数据，创建下落物
+        // 如果有有效的频率和音阶数据，创建飘动情绪和音符
         if (data.freq && data.freq > 100 && data.scale) {
-            const trackIndex = this.mapFrequencyToTrack(data.freq, data.scale);
-            this.createDropObject(trackIndex, data.freq);
+            const noteIndex = this.mapFrequencyToNote(data.freq, data.scale);       
+            // 创建飘动的情绪图像
+            this.createFloatingEmotion(noteIndex, data.freq);
         }
     }
     
-    // WebSocket设置
+    // WebSocket设置 
+    // 从Websocket里面收集arduino和mindwave的数据
     setupWebSocket() {
-        const socketUrl = 'ws://localhost:8765';
+        // 动态获取服务器地址
+        const hostname = window.location.hostname;
+        const socketUrl = `ws://${hostname}:8765`;
+        
+        console.log(`尝试连接到WebSocket服务器: ${socketUrl}`);
         
         // 清除旧的重连计时器
         if (this.reconnectTimer) {
@@ -755,27 +565,67 @@ class MusicGameVisualizationP5 {
                 if (data.timestamp !== undefined) {
                     this.arduinoData.timestamp = data.timestamp;
                 }
+
+
+                // 更新Mindwave数据
+                if (data.attention !== undefined) {
+                    this.mindwaveData.attention = data.attention;
+                }
+                if (data.meditation !== undefined) {
+                    this.mindwaveData.meditation = data.meditation;
+                }
+                if (data.rawValue !== undefined) {
+                    this.mindwaveData.rawValue = data.rawValue;
+                }
+                if (data.delta !== undefined) {
+                    this.mindwaveData.delta = data.delta;
+                }
+                if (data.theta !== undefined) {
+                    this.mindwaveData.theta = data.theta;
+                }
+                if (data.lowAlpha !== undefined) {
+                    this.mindwaveData.lowAlpha = data.lowAlpha;
+                }
+                if (data.highAlpha !== undefined) {
+                    this.mindwaveData.highAlpha = data.highAlpha;
+                }
+                if (data.lowBeta !== undefined) {
+                    this.mindwaveData.lowBeta = data.lowBeta;
+                }   
+                if (data.highBeta !== undefined) {
+                    this.mindwaveData.highBeta = data.highBeta;
+                }
+                if (data.lowGamma !== undefined) {
+                    this.mindwaveData.lowGamma = data.lowGamma;
+                }
+                if (data.midGamma !== undefined) {
+                    this.mindwaveData.midGamma = data.midGamma;
+                }
+                if (data.poorSignal !== undefined) {
+                    this.mindwaveData.poorSignal = data.poorSignal;
+                }
+                if (data.blinkStrength !== undefined) {
+                    this.mindwaveData.blinkStrength = data.blinkStrength;
+                }
+                if (data.mood !== undefined) {
+                    this.mindwaveData.mood = data.mood;
+                }
+                // 刚开始mindwave没有打开
+                if (data.mood == undefined) {
+                    this.mindwaveData.mood = 0;
+                }
                 
-                // 更新数据显示
-                const dataElement = document.getElementById('arduino-data');
-                if (dataElement) {
-                    let formattedData = `
-距离: ${this.arduinoData.distance ? this.arduinoData.distance.toFixed(2) : 0}cm
-音阶: ${this.arduinoData.scale || 'N/A'}
-音符: ${this.arduinoData.note || 0}
-频率: ${this.arduinoData.frequency ? this.arduinoData.frequency.toFixed(2) : 0}Hz 
-电位器: ${this.arduinoData.potentiometer ? this.arduinoData.potentiometer.toFixed(2) : 0}V
-旋转电位器: ${this.arduinoData.rotary_potentiometer || 'N/A'}V
-按钮状态: ${this.arduinoData.button_state === 1 ? '录制中' : '未录制'}
-`;
-                    dataElement.textContent = formattedData;
+                // 更新情绪状态显示
+                const emotionElement = document.getElementById('mobile-emotion-data');
+                if (emotionElement && this.mindwaveData.mood !== undefined) {
+                    const emotionName = this.emotionNames[this.mindwaveData.mood] || '平静';
+                    emotionElement.textContent = `心情:${emotionName}`;
                 }
                 
                 // 处理音游逻辑
                 if (data.freq && data.freq > 100 && data.scale) {
                     this.processArduinoData(data);
-                }
-                
+                } 
             } catch (error) {
                 console.error('解析JSON数据错误:', error);
             }
@@ -815,8 +665,12 @@ class MusicGameVisualizationP5 {
     
     // 重置游戏
     reset() {
-        this.dropObjects = [];
-        this.hitEffects = [];
+        this.floatingEmotions = [];
+        // 重置所有音符块状态
+        for (let block of this.noteBlocks) {
+            block.active = false;
+            block.glow = 0;
+        }
         console.log('游戏已重置');
     }
     
@@ -833,15 +687,61 @@ class MusicGameVisualizationP5 {
 
 // P5.js 全局变量
 let musicGame;
+let emotionImages = {}; // 全局情绪图像对象
+let imagesLoaded = false; // 图像加载状态
+
+// 手动加载图像的函数 - 使用async/await
+async function loadEmotionImagesManually() {
+    console.log('开始异步加载情绪图像');
+    const emotions = ['happy', 'sad', 'anger', 'peace'];
+    
+    for (let index = 0; index < emotions.length; index++) {
+        const emotion = emotions[index];
+        try {
+            console.log(`开始加载情绪图像: ${emotion}`);
+            emotionImages[index] = await loadImage(`assets/emotion/${emotion}.png`);
+            console.log(`✓ 情绪图像 ${emotion} 加载成功: ${emotionImages[index].width}x${emotionImages[index].height}`);
+        } catch (error) {
+            console.error(`✗ 情绪图像 ${emotion} 加载失败:`, error);
+            emotionImages[index] = null;
+        }
+    }
+    
+    imagesLoaded = true;
+    console.log('所有情绪图像加载完成');
+}
 
 // P5.js setup函数
-function setup() {
+async function setup() {
+    console.log('setup函数开始执行');
+    
     // 创建全屏2D画布
     let canvas = createCanvas(windowWidth, windowHeight);
     canvas.parent('p5-canvas-container');
     
+    // 在P5.js 2.x中，直接在setup中加载图像
+    await loadEmotionImagesManually();
+    
+    // 验证图像加载状态
+    console.log('=== 图像加载状态验证 ===');
+    for (let i = 0; i < 4; i++) {
+        const img = emotionImages[i];
+        console.log(`图像 ${i}:`, {
+            exists: !!img,
+            type: typeof img,
+            width: img ? img.width : 'N/A',
+            height: img ? img.height : 'N/A',
+            isPromise: img instanceof Promise,
+            constructor: img ? img.constructor.name : 'N/A'
+        });
+    }
+    
     // 初始化音游系统
     musicGame = new MusicGameVisualizationP5();
+    
+    // 将加载的图像传递给musicGame
+    musicGame.emotionImages = emotionImages;
+    musicGame.emotionImagesLoaded = imagesLoaded;
     
     // 设置全局变量以便HTML访问
     window.musicGame = musicGame;
@@ -851,13 +751,8 @@ function setup() {
 
 // P5.js draw函数
 function draw() {
-    // 卡通风格背景渐变
-    for (let i = 0; i <= height; i++) {
-        const inter = map(i, 0, height, 0, 1);
-        const c = lerpColor(color(135, 206, 250), color(255, 182, 193), inter); // 天蓝到粉红渐变
-        stroke(c);
-        line(0, i, width, i);
-    }
+    // 清除画布，使其透明，让HTML背景显示
+    clear();
     
     // 移动坐标系到中心
     push();
@@ -866,18 +761,21 @@ function draw() {
     if (musicGame) {
         // 绘制背景装饰
         musicGame.drawBackground();
-        
-        // 更新游戏状态
-        musicGame.updateDropObjects();
-        musicGame.updateHitEffects();
-        
-        // 绘制游戏元素
-        musicGame.drawTracks();
-        musicGame.drawDropObjects();
-        musicGame.drawHitEffects();
     }
     
     pop();
+    
+    // 在屏幕坐标系中绘制游戏元素
+    if (musicGame) {
+        // 更新游戏状态
+        musicGame.updateFloatingEmotions();
+        
+        // 绘制飘动的情绪SVG（在屏幕坐标系中）
+        musicGame.drawFloatingEmotions();
+        
+        // 绘制右侧音符块（在屏幕坐标系中）
+        musicGame.drawNoteBlocks();
+    }
 }
 
 // 窗口大小改变时调整画布
@@ -885,9 +783,9 @@ function windowResized() {
     // 全屏响应式调整
     resizeCanvas(windowWidth, windowHeight);
     
-    // 重新创建轨道以适应新的屏幕尺寸
+    // 重新创建音符块以适应新的屏幕尺寸
     if (musicGame) {
-        musicGame.createTracks();
+        musicGame.createNoteBlocks();
     }
 }
 

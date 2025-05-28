@@ -1,0 +1,304 @@
+/* 双层叠加按钮样式 - 基于test.html设计 */
+
+/* 按钮容器 */
+.stacked-button-container {
+    position: relative; /* 允许内部元素进行绝对定位 */
+    width: 348px; /* 根据您的SVG宽度设置 */
+    height: 100px; /* 根据您的SVG高度设置 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    outline: none; /* 移除默认焦点轮廓 */
+    border: none; /* 移除默认按钮边框 */
+    background: none; /* 移除默认按钮背景 */
+    padding: 0; /* 移除默认内边距 */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 底部层 - 阴影效果 */
+.stacked-button-bottom {
+    position: absolute;
+    top: 10px; /* 模拟SVG中 filter0_d 的 offsetY + y */
+    left: 6px;  /* 模拟SVG中 filter0_d 的 offsetX + x */
+    width: 336px; /* 对应SVG中 rect 的宽度 */
+    height: 80px; /* 对应SVG中 rect 的高度 */
+    border-radius: 10px; /* 对应SVG中 rect 的 rx */
+    box-shadow: 2px 6px 4px rgba(0, 0, 0, 0.25); /* 模拟SVG中 filter0_d 的阴影 (dx, dy, stdDeviation, opacity) */
+    z-index: 1; /* 确保在下层 */
+}
+
+/* 顶部层 - 主按钮 */
+.stacked-button-top {
+    position: absolute;
+    top: 0; /* 对应SVG中 rect 的 y=1.25，为了方便计算，我们从0开始 */
+    left: 0; /* 对应SVG中 rect 的 x=1.25，为了方便计算，我们从0开始 */
+    width: 336px; /* 对应SVG中 rect 的宽度 */
+    height: 80px; /* 对应SVG中 rect 的高度 */
+    border-radius: 10px; /* 对应SVG中 rect 的 rx */
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.0), rgba(255, 255, 255, 0.5)); /* 模拟SVG中 paint0_radial 的径向渐变 */
+    border: 2.5px solid white; /* 对应SVG中 rect 的 stroke="white" stroke-width="2.5" */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #3F3434; /* 按钮文字颜色，对应SVG中的fill */
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 2; /* 确保在上层 */
+    transition: transform 0.1s ease-out; /* 添加点击反馈动画 */
+}
+
+/* 鼠标悬停效果 */
+.stacked-button-container:hover .stacked-button-top {
+    transform: translate(-1px, -1px); /* 悬停时稍微上移，增加交互感 */
+}
+
+/* 鼠标按下效果 */
+.stacked-button-container:active .stacked-button-top {
+    transform: translate(2px, 6px); /* 按下时与底部层对齐，模拟被"按下" */
+    box-shadow: none; /* 移除阴影或减弱阴影 */
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.3)); /* 调整背景色 */
+}
+
+/* 按钮内部文字或SVG的样式 */
+.button-content {
+    position: relative; /* 确保内容在最上层 */
+    z-index: 3;
+    /* 您的SVG内容或者文本 */
+}
+
+/* 您的SVG内容（如果您想直接放置SVG而不是文本） */
+/* 为了演示，这里假设您的SVG路径内容被包裹在一个div中 */
+.button-svg-content {
+    /* 调整SVG的大小和位置 */
+    width: 200px; /* 根据实际SVG内容调整 */
+    height: 50px; /* 根据实际SVG内容调整 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* 这里的文字和路径颜色可以继承自 .stacked-button-top 或单独设置 */
+}
+
+/* 堆叠效果变体 - 主按钮 */
+.stacked-button-container.primary .stacked-button-top {
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.0), rgba(255, 255, 255, 0.5)); /* 模拟SVG中 paint0_radial 的径向渐变 */
+    border: 2.5px solid white; /* 对应SVG中 rect 的 stroke="white" stroke-width="2.5" */
+    color: rgb(0, 0, 0);
+}
+
+.stacked-button-container.primary .stacked-button-bottom {
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)); /* 模拟SVG中 paint0_radial 的径向渐变 */
+    box-shadow: 2px 6px 4px rgba(255, 255, 255, 0.7);
+}
+
+/* 堆叠效果变体 - 次要按钮 */
+.stacked-button-container.secondary .stacked-button-top {
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.0), rgba(255, 255, 255, 0.5));
+    border: 2.5px solid white;
+    color: #000000;
+}
+
+.stacked-button-container.secondary .stacked-button-bottom {
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.3));
+    box-shadow: 2px 6px 4px rgba(255, 255, 255, 0.7);
+}
+
+/* 圆形按钮变体 - 用于左上角按钮 */
+.stacked-button-container.circular {
+    width: 50px;
+    height: 50px;
+}
+
+.stacked-button-container.circular .stacked-button-bottom {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    top: 8px;
+    left: 5px;
+}
+
+.stacked-button-container.circular .stacked-button-top {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 16px;
+}
+
+/* 小尺寸按钮 */
+.stacked-button-container.small {
+    width: 200px;
+    height: 60px;
+}
+
+.stacked-button-container.small .stacked-button-bottom {
+    width: 190px;
+    height: 50px;
+    top: 6px;
+    left: 4px;
+}
+
+.stacked-button-container.small .stacked-button-top {
+    width: 190px;
+    height: 50px;
+    font-size: 16px;
+}
+
+/* 控制栏按钮特殊样式 */
+.stacked-button-container.control-bar {
+    width: auto;
+    height: 38px;
+    flex: 1;
+}
+
+.stacked-button-container.control-bar .stacked-button-bottom {
+    width: calc(100%);
+    height: 35px;
+    border-radius: 8px; 
+    top: 4px;
+    left: 4px;
+}
+
+.stacked-button-container.control-bar .stacked-button-top {
+    width: calc(100% - 35px);
+    height: 30px;
+    border-radius: 8px; 
+    font-size: 18px;
+    padding: 0 15px;
+    gap: 6px;
+    top: 0;
+    left: 0;
+}
+
+.stacked-button-container.control-bar .button-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Matches the original .control-bar .stacked-button-top gap */
+}
+/* 响应式调整 */
+@media (max-width: 768px) {
+    .stacked-button-container {
+        width: 300px;
+        height: 80px;
+    }
+    
+    .stacked-button-container .stacked-button-bottom {
+        width: 290px;
+        height: 60px;
+    }
+    
+    .stacked-button-container .stacked-button-top {
+        width: 290px;
+        height: 60px;
+        font-size: 20px;
+    }
+    
+    .stacked-button-container.small {
+        width: 180px;
+        height: 50px;
+    }
+    
+    .stacked-button-container.circular {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stacked-button-container {
+        width: 250px;
+        height: 70px;
+    }
+    
+    .stacked-button-container .stacked-button-bottom {
+        width: 240px;
+        height: 50px;
+    }
+    
+    .stacked-button-container .stacked-button-top {
+        width: 240px;
+        height: 50px;
+        font-size: 18px;
+    }
+    
+    .stacked-button-container.circular {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* 动画关键帧 */
+@keyframes stackedShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* 加载状态 */
+.stacked-button-container.loading .stacked-button-top {
+    pointer-events: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.stacked-button-container.loading .stacked-button-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -200%;
+    width: 200%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
+    animation: stackedShimmer 1.5s infinite;
+}
+
+/* 禁用状态 */
+.stacked-button-container:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.stacked-button-container:disabled:hover .stacked-button-top {
+    transform: none;
+} 
+
+/* In your music_game_p5.css or a relevant stylesheet */
+
+#button-group-container {
+    /* This will inherit much of its sizing from .stacked-button-container.control-bar */
+    /* You might want it to span the full width available in mobile-control-bar */
+    width: 100%; /* Or a specific width if mobile-control-bar doesn't constrain it enough */
+}
+
+.button-group-content {
+    display: flex;
+    justify-content: space-around; /* Distributes space around your buttons */
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 0 5px; /* Adjust padding as needed */
+    box-sizing: border-box;
+}
+
+.action-button {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* Space between icon and text */
+    padding: 8px 10px; /* Adjust padding for the buttons */
+    cursor: pointer;
+    border-radius: 6px; /* Optional: rounded corners for the inner buttons */
+    font-size: 1em; /* Or inherit from parent, adjust as needed */
+    /* Add any other desired button styling (text color, hover effects) */
+    /* Example:
+    transition: background-color 0.2s ease-in-out;
+    */
+}

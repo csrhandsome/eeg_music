@@ -58,7 +58,6 @@ def arduino_play_by_rate():
             )
             webserver_thread.start()
             
-            
             print(f"开始根据传感器数据演奏音乐，使用{args.instrument}音色...")
             start_time = time.time()
             last_play_time = 0
@@ -96,7 +95,7 @@ def arduino_play_by_rate():
                                 voltage = min(max(arduino_data['potentiometer'], 0), 5)
                                 
                                 # 根据传感器数据动态调整音符持续时间
-                                base_duration = 0.2 + (voltage / 5) * 0.8  # 0.2-1.0秒
+                                base_duration = 1.5 + (voltage / 5) * 0.5  # 1.5-2秒
                                 
                                 # 为不同乐器调整持续时间策略
                                 if args.instrument == 'piano':
@@ -107,14 +106,14 @@ def arduino_play_by_rate():
                                     duration = min(base_duration * 1.5, 1.5)
                                 else:
                                     duration = min(base_duration, 1.0)
-                                duration=1.5
+                                # duration=1.5
                                 # 播放音符 - 使用类方法而不是全局函数
-                                print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")
-                                if distance < 60 :
+                                
+                                if distance < 50 :
                                     recorder.record_note(freq, duration, args.instrument, intensity=0.8)
-                                                         
                                     player.play_note(freq, duration, args.instrument, intensity=0.8, 
-                                                     wait=False)                               
+                                                     wait=False)     
+                                    print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")                          
                                 # 更新上次播放时间
                                 last_play_time = current_time
                     except UnicodeDecodeError:
@@ -126,7 +125,7 @@ def arduino_play_by_rate():
                     break
                     
                 # 增加休眠时间，减少CPU占用
-                time.sleep(0.01)
+                time.sleep(0.03)
                 
         except KeyboardInterrupt:
             print("\n停止演奏")

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P5.js图像加载测试 - 修复版</title>
+    <script src="p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .info {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h3>P5.js图像测试 - 修复版</h3>
+        <p>检查控制台输出查看详细信息</p>
+        <p>如果图像加载成功，应该能看到4个情绪图标</p>
+    </div>
+
+    <script>
+        let emotionImages = {};
+        let imagesLoaded = false;
+
+        // 不使用preload，因为在P5.js 2.x中它可能不会正确等待Promise
+        // function preload() {
+        //     console.log('开始预加载图像...');
+        //     const emotions = ['happy', 'sad', 'anger', 'peace'];
+        //     emotions.forEach((emotion, index) => {
+        //         console.log(`加载: assets/emotion/${emotion}.png`);
+        //         emotionImages[index] = loadImage(`assets/emotion/${emotion}.png`, 
+        //             (img) => {
+        //                 console.log(`✓ ${emotion} 加载成功: ${img.width}x${img.height}`);
+        //             },
+        //             (err) => {
+        //                 console.error(`✗ ${emotion} 加载失败:`, err);
+        //             }
+        //         );
+        //     });
+        // }
+
+        async function setup() {
+            createCanvas(800, 600);
+            
+            console.log('开始异步加载图像...');
+            const emotions = ['happy', 'sad', 'anger', 'peace'];
+            
+            // 使用async/await正确加载图像
+            for (let index = 0; index < emotions.length; index++) {
+                const emotion = emotions[index];
+                try {
+                    console.log(`开始加载: assets/emotion/${emotion}.svg`);
+                    emotionImages[index] = await loadImage(`assets/emotion/${emotion}.svg`);
+                    console.log(`✓ ${emotion} 加载成功: ${emotionImages[index].width}x${emotionImages[index].height}`);
+                } catch (error) {
+                    console.error(`✗ ${emotion} 加载失败:`, error);
+                    emotionImages[index] = null;
+                }
+            }
+            
+            // 检查图像加载状态
+            console.log('=== 图像加载状态检查 ===');
+            for (let i = 0; i < 4; i++) {
+                const img = emotionImages[i];
+                console.log(`图像 ${i}:`, {
+                    exists: !!img,
+                    type: typeof img,
+                    width: img ? img.width : 'N/A',
+                    height: img ? img.height : 'N/A',
+                    isPromise: img instanceof Promise,
+                    constructor: img ? img.constructor.name : 'N/A'
+                });
+            }
+            
+            imagesLoaded = true;
+            console.log('Setup完成，所有图像已加载');
+        }
+
+        function draw() {
+            background(240);
+            
+            if (imagesLoaded) {
+                // 尝试绘制所有图像
+                for (let i = 0; i < 4; i++) {
+                    const img = emotionImages[i];
+                    const x = 100 + i * 150;
+                    const y = 300;
+                    
+                    push();
+                    translate(x, y);
+                    
+                    // 绘制背景圆圈
+                    fill(255);
+                    stroke(100);
+                    strokeWeight(2);
+                    ellipse(0, 0, 120);
+                    
+                    // 尝试绘制图像
+                    if (img && typeof img === 'object' && img.width > 0) {
+                        try {
+                            imageMode(CENTER);
+                            image(img, 0, 0, 80, 80);
+                            
+                            // 绘制标签
+                            fill(0);
+                            noStroke();
+                            textAlign(CENTER);
+                            textSize(14);
+                            text(['快乐', '悲伤', '愤怒', '平静'][i], 0, 80);
+                            
+                            // 绘制成功标记
+                            fill(0, 255, 0);
+                            noStroke();
+                            textAlign(CENTER);
+                            textSize(12);
+                            text('✓', 0, -60);
+                        } catch (error) {
+                            console.error(`绘制图像 ${i} 失败:`, error);
+                            // 绘制错误标记
+                            fill(255, 0, 0);
+                            noStroke();
+                            textAlign(CENTER);
+                            textSize(20);
+                            text('X', 0, 0);
+                            textSize(12);
+                            text('绘制失败', 0, 80);
+                        }
+                    } else {
+                        // 绘制缺失标记
+                        fill(200);
+                        noStroke();
+                        textAlign(CENTER);
+                        textSize(20);
+                        text('?', 0, 0);
+                        textSize(12);
+                        text(['快乐', '悲伤', '愤怒', '平静'][i], 0, 60);
+                        text('加载失败', 0, 80);
+                    }
+                    
+                    pop();
+                }
+            } else {
+                // 显示加载中
+                fill(0);
+                noStroke();
+                textAlign(CENTER);
+                textSize(20);
+                text('正在加载图像...', width/2, height/2);
+            }
+            
+            // 绘制说明文字
+            fill(0);
+            noStroke();
+            textAlign(CENTER);
+            textSize(16);
+            text('P5.js 情绪图像加载测试 - 修复版 (async/await)', width/2, 50);
+            textSize(12);
+            text('检查控制台查看详细加载信息', width/2, 70);
+            
+            // 显示加载状态
+            textSize(14);
+            fill(imagesLoaded ? [0, 150, 0] : [150, 0, 0]);
+            text(`加载状态: ${imagesLoaded ? '完成' : '进行中'}`, width/2, height - 30);
+        }
+    </script>
+</body>
+</html> 

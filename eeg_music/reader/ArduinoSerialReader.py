@@ -108,7 +108,7 @@ class ArduinoSerialReader:
         """解析Arduino传来的数据行
         
         示例格式:
-        Distance: 34.79 cm, Scale: C Major, Note: 5, Adjusted Frequency: 440.00 potentiometer 2.55 Rotary potentiometer: 3.25 Button State: 1
+        Distance: 34.79 cm, Scale: C Major, Note: 5, Base Frequency: 440.00 potentiometer 2.55 Rotary potentiometer: 3.25 Button State: 1
         """
         try:
             # 检查是否是数据行（包含Distance关键字）
@@ -129,7 +129,7 @@ class ArduinoSerialReader:
                     self.note = int(note_match.group(1))
                     
                 # 提取调整后的频率
-                freq_match = re.search(r"Adjusted Frequency:\s+([\d.]+)", line)
+                freq_match = re.search(r"Base Frequency:\s+([\d.]+)", line)
                 if freq_match:
                     self.frequency = float(freq_match.group(1))
                     

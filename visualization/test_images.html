@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片加载测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .image-test {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .image-test img {
+            width: 64px;
+            height: 64px;
+            margin: 10px;
+            border: 2px solid #ccc;
+        }
+        .image-test.success {
+            border-color: #4CAF50;
+            background-color: #f8fff8;
+        }
+        .image-test.error {
+            border-color: #f44336;
+            background-color: #fff8f8;
+        }
+        .status {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .success .status {
+            color: #4CAF50;
+        }
+        .error .status {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>情绪图片加载测试</h1>
+        <p>测试 assets/emotion/ 目录下的图片是否能正确加载</p>
+        
+        <div id="test-results">
+            <!-- 测试结果将在这里显示 -->
+        </div>
+        
+        <button onclick="runTest()" style="padding: 10px 20px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            重新测试
+        </button>
+    </div>
+
+    <script>
+        const emotions = [
+            { name: 'happy', label: '快乐' },
+            { name: 'sad', label: '悲伤' },
+            { name: 'anger', label: '愤怒' },
+            { name: 'peace', label: '平静' }
+        ];
+
+        function runTest() {
+            const resultsContainer = document.getElementById('test-results');
+            resultsContainer.innerHTML = '<p>正在测试图片加载...</p>';
+            
+            let testResults = [];
+            let completedTests = 0;
+            
+            emotions.forEach((emotion, index) => {
+                const img = new Image();
+                const testDiv = document.createElement('div');
+                testDiv.className = 'image-test';
+                testDiv.innerHTML = `
+                    <h3>${emotion.label} (${emotion.name}.png)</h3>
+                    <img id="img-${index}" src="assets/emotion/${emotion.name}.png" alt="${emotion.label}">
+                    <div class="status" id="status-${index}">加载中...</div>
+                `;
+                
+                img.onload = function() {
+                    testDiv.className = 'image-test success';
+                    document.getElementById(`status-${index}`).textContent = 
+                        `✓ 加载成功 (${this.naturalWidth}x${this.naturalHeight})`;
+                    testResults[index] = { success: true, emotion: emotion.name };
+                    checkAllComplete();
+                };
+                
+                img.onerror = function() {
+                    testDiv.className = 'image-test error';
+                    document.getElementById(`status-${index}`).textContent = 
+                        `✗ 加载失败`;
+                    testResults[index] = { success: false, emotion: emotion.name };
+                    checkAllComplete();
+                };
+                
+                img.src = `assets/emotion/${emotion.name}.png`;
+                resultsContainer.appendChild(testDiv);
+            });
+            
+            function checkAllComplete() {
+                completedTests++;
+                if (completedTests === emotions.length) {
+                    const successCount = testResults.filter(r => r.success).length;
+                    const summaryDiv = document.createElement('div');
+                    summaryDiv.innerHTML = `
+                        <h3>测试完成</h3>
+                        <p>成功加载: ${successCount}/${emotions.length} 张图片</p>
+                        ${successCount === emotions.length ? 
+                            '<p style="color: #4CAF50; font-weight: bold;">✓ 所有图片加载成功！</p>' : 
+                            '<p style="color: #f44336; font-weight: bold;">✗ 部分图片加载失败，请检查文件路径</p>'
+                        }
+                    `;
+                    resultsContainer.appendChild(summaryDiv);
+                }
+            }
+        }
+        
+        // 页面加载时自动运行测试
+        window.onload = runTest;
+    </script>
+</body>
+</html> 
