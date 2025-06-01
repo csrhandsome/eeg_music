@@ -31,14 +31,16 @@ class MindwaveSerialReader:
 
     def connect(self):
         """建立串口连接"""
-        try:
-            self.neuro = MindwaveSerial(self.port, self.baudrate)
-            self.neuro.start()
-            print(f"成功连接到 {self.port}")
-            return True
-        except Exception as e:
-            print(f"连接失败: {str(e)}")
-            return False
+        while True:
+            try:
+                self.neuro = MindwaveSerial(self.port, self.baudrate)
+                self.neuro.start()
+                print(f"成功连接到 {self.port}")
+                return True
+            except Exception as e:
+                print(f"连接失败: {str(e)}")
+                time.sleep(3)
+                continue
             
     def disconnect(self):
         """关闭串口连接"""

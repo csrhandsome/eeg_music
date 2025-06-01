@@ -1,5 +1,6 @@
 #include "Adafruit_NeoPixel.h"     // 包含用于控制 NeoPixels（WS2812B 灯珠）的库文件
-
+#include "DataFilter.h"
+using namespace DataFilter;
 // 定义引脚
 #define TRIG_PIN A0  // 超声波 trig 引脚
 #define ECHO_PIN A1  // 超声波 echo 引脚
@@ -131,6 +132,7 @@ void setup() {
   strip.begin();
   strip.show();
   Serial.begin(9600);
+  DataFilter::init();  // 初始化数据过滤器
 }
 
 void loop() {
@@ -164,8 +166,11 @@ void loop() {
   }
   lastButtonState = currentButtonState;
 
-  // 超声波测距
-  float distance = checkdistance();
+  // 超声波测距并应用数据过滤
+  float raw_distance = checkdistance();
+  float filtered_distance = filterSuddenChange(raw_distance);  // 过滤突然变化
+  float distance = smoothDistance(filtered_distance);          // 平滑处理
+  
   int note_index;
   if (distance < 10) {
     note_index = 0;

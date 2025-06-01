@@ -167,6 +167,7 @@
     gap: 6px;
     top: 0;
     left: 0;
+    overflow: hidden; /* 确保内容不会超出容器 */
 }
 
 .stacked-button-container.control-bar .button-content {
@@ -175,6 +176,7 @@
     justify-content: center;
     gap: 6px; /* Matches the original .control-bar .stacked-button-top gap */
 }
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .stacked-button-container {
@@ -281,24 +283,41 @@
 
 .button-group-content {
     display: flex;
-    justify-content: space-around; /* Distributes space around your buttons */
+    justify-content: space-between; /* 改为space-between让按钮占满空间 */
     align-items: center;
     width: 100%;
     height: 100%;
-    padding: 0 5px; /* Adjust padding as needed */
+    padding: 0; /* 移除padding让按钮占满空间 */
     box-sizing: border-box;
+    overflow: hidden; /* 防止子元素超出 */
+    margin: 0 -2px; /* 负margin让容器稍微扩展 */
 }
 
 .action-button {
     display: flex;
     align-items: center;
-    gap: 6px; /* Space between icon and text */
-    padding: 8px 10px; /* Adjust padding for the buttons */
+    justify-content: center; /* 居中对齐内容 */
+    gap: 0px; /* 稍微减小图标和文字间距 */
+    padding: 0px; /* 移除所有padding */
     cursor: pointer;
-    border-radius: 6px; /* Optional: rounded corners for the inner buttons */
-    font-size: 1em; /* Or inherit from parent, adjust as needed */
-    /* Add any other desired button styling (text color, hover effects) */
-    /* Example:
-    transition: background-color 0.2s ease-in-out;
-    */
+    border-radius: 8px; /* 稍微减小圆角 */
+    font-size: 0.9em; /* 稍微减小字体 */
+    transition: all 0.2s ease-in-out;
+    flex: 1; /* 让按钮平均分配宽度 */
+    margin: 0 1px; /* 很小的间距防止按钮完全重叠 */
+    box-sizing: border-box;
+    overflow: hidden; /* 确保内容不超出 */
+    height: 100%; /* 占满容器高度 */
+    width: 100%; /* 稍微超出50%来确保填满 */
+}
+
+/* Action button hover effects */
+.action-button:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    color: #333;
+    transform: none; /* 移除transform防止超出 */
+}
+
+.action-button:hover img {
+    filter: brightness(0) saturate(100%) invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(20%) contrast(100%);
 }

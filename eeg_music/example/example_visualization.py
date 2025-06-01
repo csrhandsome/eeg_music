@@ -1,8 +1,8 @@
 import argparse
 import asyncio
-from server.WebServer import WebServer
-from reader.ArduinoSerialReader import ArduinoSerialReader
-from reader.MindwaveSerialReader import MindwaveSerialReader
+from eeg_music.server.WebServer import WebServer
+from eeg_music.reader.ArduinoSerialReader import ArduinoSerialReader
+from eeg_music.reader.MindwaveSerialReader import MindwaveSerialReader
 
 def open_websocket():
     parser = argparse.ArgumentParser(description='WebSocket server for EEG music')

@@ -3,6 +3,7 @@ import websockets
 import json
 import time
 import os
+import glob
 from aiohttp import web, web_runner
 from eeg_music.reader.ArduinoSerialReader import ArduinoSerialReader
 from eeg_music.reader.MindwaveSerialReader import MindwaveSerialReader
@@ -160,10 +161,78 @@ class WebServer:
         
         app.router.add_get('/', index_handler)
         
+        # 添加文件列表API
+        async def file_list_handler(request):
+            try:
+                # 获取当前工作目录下的data/music_notes路径
+                current_dir = os.getcwd()
+                data_dir = os.path.join(current_dir, 'data', 'music_notes')
+                
+                print(f"查找文件目录: {data_dir}")
+                
+                if not os.path.exists(data_dir):
+                    print(f"目录不存在: {data_dir}")
+                    return web.json_response({"error": f"目录不存在: {data_dir}"}, status=404)
+                
+                # 获取所有CSV文件
+                csv_files = glob.glob(os.path.join(data_dir, "*.csv"))
+                print(f"找到 {len(csv_files)} 个CSV文件")
+                
+                file_list = []
+                for file_path in csv_files:
+                    try:
+                        # 获取文件信息
+                        file_name = os.path.basename(file_path)
+                        file_size = os.path.getsize(file_path)
+                        
+                        # 格式化文件大小
+                        if file_size >= 1024 * 1024:
+                            size_str = f"{file_size / (1024 * 1024):.1f}MB"
+                        elif file_size >= 1024:
+                            size_str = f"{file_size / 1024:.1f}KB"
+                        else:
+                            size_str = f"{file_size}B"
+                        
+                        # 计算文件行数（CSV文件）
+                        lines = 0
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                lines = sum(1 for _ in f)
+                                if lines > 0:
+                                    lines -= 1  # 减去标题行
+                        except:
+                            lines = 0
+                        
+                        file_list.append({
+                            "name": file_name,
+                            "size": size_str,
+                            "lines": lines
+                        })
+                        print(f"处理文件: {file_name} - {size_str} - {lines}行")
+                    except Exception as e:
+                        print(f"处理文件 {file_path} 时出错: {e}")
+                        continue
+                
+                # 按文件名降序排序
+                file_list.sort(key=lambda x: x["name"], reverse=True)
+                
+                return web.json_response({"files": file_list})
+                
+            except Exception as e:
+                print(f"获取文件列表时出错: {e}")
+                import traceback
+                traceback.print_exc()
+                return web.json_response({"error": str(e)}, status=500)
+        
+        app.router.add_get('/api/files', file_list_handler)
+        
         # 简化的CORS支持
+        @web.middleware
         async def cors_handler(request, handler):
             response = await handler(request)
             response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
             return response
         
         app.middlewares.append(cors_handler)

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 样式现在统一在外部CSS文件中管理 -->
+    <title>EEG音乐系统 - 录制页面</title>
+    <!-- 引入 P5.js -->
+    <script src="p5.min.js"></script>
+    <!-- 引入独立的CSS文件 -->
+    <link rel="stylesheet" href="styles/music_game_p5.css">
+    <!-- 引入双层堆叠按钮样式 -->
+    <link rel="stylesheet" href="styles/stacked-button.css">
+    <!-- 引入背景样式 -->
+    <link rel="stylesheet" href="styles/body_background.css">
+    <!-- 引入背景增强脚本 -->
+    <script src="scripts/background_enhancer.js"></script>
+    <!-- 引入录制页面导航样式 -->
+    <link rel="stylesheet" href="styles/record_navigation.css">
+</head>
+
+<body>
+    <!-- P5.js 画布容器 -->
+    <div id="p5-canvas-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
+    
+    <!-- 计时器 -->
+    <div class="record-timer stacked-button-container">
+        <div class="stacked-button-bottom"></div>
+        <div class="stacked-button-top">
+            <span id="timer-display">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- 文件名输入模态框 -->
+    <div class="filename-modal" id="filename-modal">
+        <div class="filename-content">
+            <div class="stacked-button-bottom"></div>
+            <div class="stacked-button-top">
+                <div class="filename-title">文件命名</div>
+                <div class="filename-subtitle">文件名称将会显示在历史记录中</div>
+                <input type="text" class="filename-input" id="filename-input" placeholder="输入文字......" maxlength="100">
+                <div class="filename-buttons">
+                    <button class="filename-btn confirm" onclick="confirmFilename()">确认</button>
+                    <button class="filename-btn cancel" onclick="cancelFilename()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 保存成功提示模态框 -->
+    <div class="success-modal" id="success-modal">
+        <div class="success-content">
+            <div class="stacked-button-bottom"></div>
+            <div class="stacked-button-top">
+                <div class="success-title">保存成功！</div>
+                <div class="success-subtitle">请在历史记录中查看</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部录制控制按钮 -->
+    <div class="record-controls-bottom">
+        <button onclick="quitRecord()" title="退出">
+            <img src="assets/quit.svg" alt="退出" />
+        </button>
+        
+        <button onclick="startRecord()" title="开始录制">
+            <img src="assets/start_record.svg" alt="开始录制" />
+        </button>
+        
+        <button onclick="stopRecord()" title="停止录制">
+            <img src="assets/stop.svg" alt="停止录制" />
+        </button>
+    </div>
+    
+    <!-- 引入音游逻辑 -->
+    <script src="scripts/music_game_p5.js"></script>
+    <!-- 引入独立的JavaScript文件 -->
+    <script src="scripts/music_game_p5_script.js"></script>
+</body>
+</html> 

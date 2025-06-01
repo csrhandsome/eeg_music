@@ -36,17 +36,19 @@ class ArduinoSerialReader:
         
     def connect(self):
         """建立串口连接"""
-        try:
-            self.serial = serial.Serial(
-                port=self.port,
-                baudrate=self.baudrate,
-                timeout=self.timeout
-            )
-            print(f"成功连接到 {self.port}")
-            return True
-        except Exception as e:
-            print(f"连接失败: {str(e)}")
-            return False
+        while True:
+            try:
+                self.serial = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    timeout=self.timeout
+                )
+                print(f"成功连接到 {self.port}")
+                return True
+            except Exception as e:
+                print(f"连接失败: {str(e)}")
+                time.sleep(3)
+                continue
             
     def disconnect(self):
         """关闭串口连接"""

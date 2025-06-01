@@ -1,0 +1,259 @@
+/* 录制页面专用样式 */
+.record-timer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 900;
+    width: 200px;
+    height: 60px;
+}
+
+.record-timer .stacked-button-bottom {
+    width: 190px;
+    height: 50px;
+    top: 6px;
+    left: 4px;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+    box-shadow: 2px 6px 4px rgba(255, 255, 255, 0.5);
+}
+
+.record-timer .stacked-button-top {
+    width: 190px;
+    height: 50px;
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4));
+    border: 2px solid white;
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* 录制控制按钮 - 底部样式 */
+.record-controls-bottom {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 30px;
+    z-index: 1000;
+    align-items: center;
+}
+
+.record-controls-bottom button {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.record-controls-bottom button:hover {
+    transform: scale(1.1);
+}
+
+.record-controls-bottom button img {
+    width: 60px;
+    height: 60px;
+}
+
+/* 中间的开始录制按钮特殊样式 - 更大 */
+.record-controls-bottom button:nth-child(2) {
+    transform: scale(1.2);
+}
+
+.record-controls-bottom button:nth-child(2):hover {
+    transform: scale(1.3);
+}
+
+.record-controls-bottom button:nth-child(2) img {
+    width: 70px;
+    height: 70px;
+}
+
+.filename-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.filename-modal.show {
+    display: flex;
+}
+
+.filename-content {
+    width: 400px;
+    height: 240px;
+    position: relative;
+}
+
+/* 文件名模态框专用的堆叠按钮样式 */
+.filename-content .stacked-button-bottom {
+    width: 390px;
+    height: 230px;
+    top: 6px;
+    left: 4px;
+    position: absolute;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+    box-shadow: 2px 6px 4px rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    z-index: 1;
+}
+
+.filename-content .stacked-button-top {
+    width: 390px;
+    height: 230px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4));
+    border: 2px solid white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+.filename-title {
+    color: #333;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.filename-subtitle {
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 15px;
+}
+
+.filename-input {
+    width: 100%;
+    padding: 8px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.filename-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+}
+
+.filename-btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    min-width: 120px;
+    box-sizing: border-box;
+}
+
+.filename-btn.confirm {
+    background: #dcc7b5;
+    color: white;
+}
+
+.filename-btn.cancel {
+    background: #ffffff;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+/* 成功提示模态框样式 */
+.success-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.success-modal.show {
+    display: flex;
+}
+
+.success-content {
+    width: 400px;
+    height: 200px;
+    position: relative;
+}
+
+/* 成功提示模态框专用的堆叠按钮样式 */
+.success-content .stacked-button-bottom {
+    width: 390px;
+    height: 190px;
+    top: 6px;
+    left: 4px;
+    position: absolute;
+    background: linear-gradient(to bottom right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+    box-shadow: 2px 6px 4px rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    z-index: 1;
+}
+
+.success-content .stacked-button-top {
+    width: 390px;
+    height: 190px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: linear-gradient(to top left, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.4));
+    border: 2px solid white;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    z-index: 2;
+}
+
+.success-title {
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.success-subtitle {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.success-btn {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    background: #dcc7b5;
+    color: #333;
+    min-width: 120px;
+}

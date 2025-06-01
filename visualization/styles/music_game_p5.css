@@ -40,13 +40,13 @@ input[type="text"] {
 }
 
 input[type="text"]:focus {
-    border-color: #4CAF50;
-    box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+    border-color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
     background-color: rgba(255, 255, 255, 0.15);
 }
 
 input[type="text"]::placeholder {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(0, 0, 0, 0.6);
 }
 
 button {
@@ -404,90 +404,14 @@ button:disabled {
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
-/* 输入面板 - 屏幕中间上部分弹出式 */
-.mobile-input-panel {
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 500px;
-    background: rgba(255, 255, 255, 0.5);
-    padding: 20px;
-    z-index: 1000;
-    border-radius: 15px;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 30px rgba(255, 255, 255, 0.5);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-50%) translateY(-20px);
-    transition: all 0.3s ease;
-}
-
-.mobile-input-panel.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
-}
-
 /* 输入面板背景遮罩 - 隐藏不使用 */
 .input-panel-overlay {
     display: none;
 }
 
-/* 输入面板头部 */
-.mobile-input-panel .panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
 
-.mobile-input-panel .panel-title {
-    color: #ffffff;
-    font-weight: bold;
-    font-size: 16px;
-    margin: 0;
-}
 
-/* 关闭按钮 */
-.mobile-input-panel .close-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    padding: 0;
-    min-width: auto;
-}
 
-.mobile-input-panel .close-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.mobile-input-panel input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
-    font-size: 14px;
-    box-sizing: border-box;
-}
 
 /* 移动端响应式设计 - 全新布局 */
 @media (max-width: 768px) {
@@ -551,12 +475,7 @@ button:disabled {
         height: 35px;
         border-radius: 18px;
     }
-    
-    .mobile-input-panel {
-        top: 15%;
-        width: 95%;
-        padding: 15px;
-    }
+
     
     .mobile-status {
         width: 100px;
@@ -571,23 +490,7 @@ button:disabled {
         border-width: 1px;
     }
     
-    .mobile-input-panel {
-        padding: 12px;
-    }
-    
-    .mobile-input-panel input {
-        padding: 10px;
-        font-size: 13px;
-    }
-    
-    .mobile-input-panel button {
-        padding: 10px;
-        font-size: 13px;
-    }
-    
-    .mobile-input-panel.show {
-        bottom: 55px;
-    }
+
 }
 
 /* 横屏优化 */
@@ -629,23 +532,6 @@ button:disabled {
         border-width: 1px;
     }
     
-    .mobile-input-panel {
-        padding: 8px;
-    }
-    
-    .mobile-input-panel input {
-        padding: 8px;
-        font-size: 12px;
-    }
-    
-    .mobile-input-panel button {
-        padding: 8px;
-        font-size: 12px;
-    }
-    
-    .mobile-input-panel.show {
-        bottom: 50px;
-    }
 }
 
 /* 传统横屏优化 - 桌面端 */
@@ -795,23 +681,6 @@ button:disabled {
         border-width: 1px;
     }
     
-    .mobile-input-panel {
-        padding: 6px;
-    }
-    
-    .mobile-input-panel input {
-        padding: 6px;
-        font-size: 11px;
-    }
-    
-    .mobile-input-panel button {
-        padding: 6px;
-        font-size: 11px;
-    }
-    
-    .mobile-input-panel.show {
-        bottom: 40px;
-    }
 }
 
 /* 横屏小屏幕进一步优化 - 桌面端 */
