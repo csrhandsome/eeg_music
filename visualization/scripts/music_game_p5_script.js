@@ -16,8 +16,8 @@ function switchToOriginal() {
 
 function toggleVisualizationMode() {
     if (currentMode === 'game') {
-        // 切换到传统模式
-        window.location.href = 'processing.html';
+        // 传统模式暂时不可用
+        alert('传统可视化模式暂时不可用，请继续使用当前2D音游模式');
     }
 }
 
@@ -73,14 +73,14 @@ function sendRecordingSongName() {
         return;
     }
     
-    // 发送录制歌曲名称到WebSocket服务器
-    if (window.musicGame && window.musicGame.socket && window.musicGame.socket.readyState === WebSocket.OPEN) {
+    // 发送录制歌曲名称到Socket.IO服务器
+    if (window.musicGame && window.musicGame.socket && window.musicGame.socket.connected) {
         const message = {
             type: 'recording_song_name',
             data: songName,
             timestamp: Date.now()
         };
-        window.musicGame.socket.send(JSON.stringify(message));
+        window.musicGame.socket.emit('message', message);
         
         // 清空输入框
         songNameInput.value = '';
@@ -98,7 +98,7 @@ function sendRecordingSongName() {
         
         console.log('已发送录制歌曲名称:', songName);
     } else {
-        alert('WebSocket连接未建立,请稍后再试！');
+        alert('Socket.IO连接未建立,请稍后再试！');
     }
 }
 
@@ -121,6 +121,24 @@ let recordingState = 'stopped'; // 'stopped', 'recording', 'paused'
 let pausedByStop = false; // 标记是否是通过停止按钮暂停的
 let totalElapsedTime = 0; // 累计录制时间（毫秒）
 let lastStartTime = 0; // 最近一次开始录制的时间
+
+// 发送录制状态到后端
+function sendRecordingState(state, action = null) {
+    if (window.musicGame && window.musicGame.socket && window.musicGame.socket.connected) {
+        const message = {
+            type: 'recording_state',
+            data: {
+                state: state,
+                action: action,
+                timestamp: Date.now()
+            }
+        };
+        window.musicGame.socket.emit('message', message);
+        console.log(`已发送录制状态到后端: ${state} (action: ${action})`);
+    } else {
+        console.warn('Socket.IO连接未建立，无法发送录制状态');
+    }
+}
 
 // 更新录制计时器显示
 function updateRecordTimer() {
@@ -195,11 +213,19 @@ function startRecord() {
         totalElapsedTime = 0;
         lastStartTime = Date.now();
         resumeRecording();
+        
+        // 发送开始录制状态到后端
+        sendRecordingState('recording', 'start');
+        
         console.log('开始录制');
     } else if (recordingState === 'recording') {
         // 第二次点击：暂停计时并弹出文件名输入
         recordingState = 'paused';
         pauseRecording();
+        
+        // 发送暂停录制状态到后端（因为弹出文件名窗口）
+        sendRecordingState('paused', 'filename_modal_open');
+        
         document.getElementById('filename-modal').classList.add('show');
         console.log('录制暂停，等待输入文件名');
     }
@@ -214,6 +240,10 @@ function stopRecord() {
         // 点击停止：暂停录制并显示遮罩，切换图标
         pausedByStop = true;
         pauseRecording();
+        
+        // 发送暂停录制状态到后端
+        sendRecordingState('paused', 'stop_button');
+        
         showPauseOverlay();
         stopImg.src = 'assets/start_play.png';
         stopImg.alt = '继续录制';
@@ -224,6 +254,10 @@ function stopRecord() {
         pausedByStop = false;
         hidePauseOverlay();
         resumeRecording();
+        
+        // 发送继续录制状态到后端
+        sendRecordingState('recording', 'resume');
+        
         stopImg.src = 'assets/stop.svg';
         stopImg.alt = '停止录制';
         stopButton.title = '停止录制';
@@ -235,6 +269,22 @@ function stopRecord() {
 function confirmFilename() {
     const filename = document.getElementById('filename-input').value.trim();
     if (filename) {
+        // 发送文件名到Socket.IO服务器
+        if (window.musicGame && window.musicGame.socket && window.musicGame.socket.connected) {
+            const message = {
+                type: 'save_filename',
+                data: filename,
+                timestamp: Date.now()
+            };
+            window.musicGame.socket.emit('message', message);
+            console.log('已发送录制文件名:', filename);
+        } else {
+            console.warn('Socket.IO连接未建立，无法发送文件名');
+        }
+        
+        // 发送结束录制状态到后端
+        sendRecordingState('stopped', 'save_and_finish');
+        
         document.getElementById('filename-modal').classList.remove('show');
         // 显示成功提示模态框
         showSuccessMessage();
@@ -274,6 +324,10 @@ function cancelFilename() {
     if (recordingState === 'paused') {
         recordingState = 'recording';
         resumeRecording();
+        
+        // 发送继续录制状态到后端
+        sendRecordingState('recording', 'cancel_filename_continue');
+        
         console.log('取消文件名输入，继续录制');
     }
 }
@@ -318,14 +372,14 @@ function sendMobileSongName() {
         return;
     }
     
-    // 发送到WebSocket服务器
-    if (window.musicGame && window.musicGame.socket && window.musicGame.socket.readyState === WebSocket.OPEN) {
+    // 发送到Socket.IO服务器
+    if (window.musicGame && window.musicGame.socket && window.musicGame.socket.connected) {
         const message = {
             type: 'song_name',
             data: songName,
             timestamp: Date.now()
         };
-        window.musicGame.socket.send(JSON.stringify(message));
+        window.musicGame.socket.emit('message', message);
         
         // 清空输入框并关闭面板
         input.value = '';
@@ -335,7 +389,7 @@ function sendMobileSongName() {
         alert('歌曲名称已发送: ' + songName);
         console.log('已发送歌曲名称:', songName);
     } else {
-        alert('WebSocket连接未建立,请稍后再试！');
+        alert('Socket.IO连接未建立,请稍后再试！');
     }
 }
 
@@ -344,7 +398,7 @@ function updateMobileStatus() {
     const arduinoData = document.getElementById('mobile-arduino-data');
     
     if (window.musicGame && window.musicGame.socket) {
-        const status = window.musicGame.socket.readyState === WebSocket.OPEN ? '已连接' : '连接中...';
+        const status = window.musicGame.socket.connected ? '已连接' : '连接中...';
         if (statusText) statusText.textContent = status;
         
         const data = window.musicGame.arduinoData;
@@ -409,6 +463,100 @@ function createTestNotePopup(noteIndex = 0, frequency = 440) {
         const scale = 'C Major';
         window.musicGame.createNotePopup(frequency, scale);
     }
+}
+
+// 检查音符弹出框容器状态（调试用）
+function checkNotePopupContainer() {
+    const container = document.getElementById('note-popup-container');
+    if (!container) {
+        console.error('❌ 音符弹出框容器未找到');
+        return false;
+    }
+    
+    const styles = window.getComputedStyle(container);
+    const rect = container.getBoundingClientRect();
+    
+    console.log('🔍 音符弹出框容器状态检查:');
+    console.log('- 容器存在:', !!container);
+    console.log('- 显示状态 (display):', styles.display);
+    console.log('- 可见性 (visibility):', styles.visibility);
+    console.log('- 透明度 (opacity):', styles.opacity);
+    console.log('- Z-index:', styles.zIndex);
+    console.log('- 位置信息:', {
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height
+    });
+    console.log('- 背景颜色:', styles.backgroundColor);
+    console.log('- 定位方式:', styles.position);
+    
+    // 检查是否被其他元素遮挡
+    const isVisible = rect.width > 0 && rect.height > 0 && 
+                     styles.display !== 'none' && 
+                     styles.visibility !== 'hidden' && 
+                     parseFloat(styles.opacity) > 0;
+    
+    console.log('- 容器是否可见:', isVisible ? '✅' : '❌');
+    
+    // 检查设备模式
+    const isDeviceMode = window.innerWidth <= 768 || window.innerHeight <= 600;
+    console.log('- 当前是否为设备模式:', isDeviceMode ? '📱' : '💻');
+    
+    return isVisible;
+}
+
+// 强制显示音符弹出框容器（紧急修复）
+function forceShowNotePopupContainer() {
+    const container = document.getElementById('note-popup-container');
+    if (!container) {
+        console.error('❌ 音符弹出框容器未找到，无法强制显示');
+        return false;
+    }
+    
+    // 强制设置样式
+    container.style.display = 'block';
+    container.style.visibility = 'visible';
+    container.style.opacity = '1';
+    container.style.position = 'fixed';
+    container.style.right = '0';
+    container.style.top = '0';
+    container.style.zIndex = '999';
+    
+    console.log('💪 已强制显示音符弹出框容器');
+    return true;
+}
+
+// 测试多个音符弹出框
+function testMultipleNotePopups() {
+    if (!window.musicGame) {
+        console.error('音游系统未初始化');
+        return;
+    }
+    
+    console.log('🧪 开始测试多个音符弹出框');
+    
+    // 先检查容器状态
+    checkNotePopupContainer();
+    
+    // 如果容器不可见，尝试强制显示
+    const container = document.getElementById('note-popup-container');
+    if (container && window.getComputedStyle(container).display === 'none') {
+        forceShowNotePopupContainer();
+    }
+    
+    // 测试不同的音符
+    const testFrequencies = [261.63, 293.66, 329.63, 349.23, 392.00]; // C D E F G
+    const scale = 'C Major';
+    
+    testFrequencies.forEach((freq, index) => {
+        setTimeout(() => {
+            console.log(`测试音符 ${index + 1}: ${freq}Hz`);
+            window.musicGame.createNotePopup(freq, scale);
+        }, index * 800); // 间隔800ms
+    });
 }
 
 // 手动创建测试飘动情绪SVG（用于调试）
@@ -496,6 +644,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('note-popup-container');
     if (!container) {
         console.warn('音符弹出框容器未找到');
+    } else {
+        console.log('✅ 音符弹出框容器已找到');
+        
+        // 检查容器初始状态
+        setTimeout(() => {
+            console.log('🔍 执行音符弹出框容器初始状态检查...');
+            const isVisible = checkNotePopupContainer();
+            
+            if (!isVisible) {
+                console.warn('⚠️ 音符弹出框容器不可见，尝试修复...');
+                forceShowNotePopupContainer();
+                
+                // 再次检查
+                setTimeout(() => {
+                    const fixedVisible = checkNotePopupContainer();
+                    if (fixedVisible) {
+                        console.log('✅ 音符弹出框容器修复成功');
+                    } else {
+                        console.error('❌ 音符弹出框容器修复失败');
+                    }
+                }, 100);
+            }
+        }, 500);
+        
+        // 添加窗口大小变化时的检查
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                console.log('📏 窗口大小改变，重新检查音符弹出框容器状态');
+                const isVisible = checkNotePopupContainer();
+                if (!isVisible) {
+                    console.warn('⚠️ 窗口大小改变后容器不可见，尝试修复...');
+                    forceShowNotePopupContainer();
+                }
+            }, 300);
+        });
     }
     
     // 初始化情绪显示
@@ -513,6 +698,23 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (e.key === 'a' || e.key === 'A') {
             // 按A键测试所有音符块
             testAllNoteBlocks();
+        } else if (e.key === 'p' || e.key === 'P') {
+            // 按P键测试音符弹出框
+            const randomFreq = 261.63 + Math.random() * 400; // C4-G5范围
+            createTestNotePopup(0, randomFreq);
+        } else if (e.key === 'm' || e.key === 'M') {
+            // 按M键测试多个音符弹出框
+            testMultipleNotePopups();
+        } else if (e.key === 'c' || e.key === 'C') {
+            // 按C键检查容器状态
+            checkNotePopupContainer();
+        } else if (e.key === 'f' || e.key === 'F') {
+            // 按F键强制显示容器
+            forceShowNotePopupContainer();
+        } else if (e.key === 'r' || e.key === 'R') {
+            // 按R键重置所有弹出框
+            clearNotePopups();
+            console.log('🧹 已清除所有音符弹出框');
         }
     });
 });

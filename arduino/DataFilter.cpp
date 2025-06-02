@@ -9,7 +9,7 @@ namespace DataFilter
     static int historyIndex = 0;
     static bool historyFull = false;
     static const float MAX_CHANGE_THRESHOLD = 15.0;  // 最大允许变化阈值(cm)
-
+    static int change = 0;
     void init() {
         lastDistance = 0;
         initialized = false;
@@ -30,11 +30,13 @@ namespace DataFilter
         }
         
         // 如果距离变化太大（可能是检测错误），保持上一次的值
-        if (abs(newDistance - lastDistance) > MAX_CHANGE_THRESHOLD) {
+        if (abs(newDistance - lastDistance) > MAX_CHANGE_THRESHOLD && change<3) {
+            change++;
             return lastDistance;  // 不采用突然变化的值
         }
         
         // 更新上一次距离并返回新值
+        change=0;
         lastDistance = newDistance;
         return newDistance;
     }

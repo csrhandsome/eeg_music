@@ -4,8 +4,9 @@ using namespace DataFilter;
 // 定义引脚
 #define TRIG_PIN A0  // 超声波 trig 引脚
 #define ECHO_PIN A1  // 超声波 echo 引脚
-#define POT1_PIN A2  // 滑动电位器引脚
-#define POT2_PIN A3  // 旋转电位器引脚
+#define POT1_PIN A7  // 滑动电位器引脚(DURATION)
+#define POT2_PIN A5  // 旋转电位器引脚(调)
+#define POT3_PIN A4  // 旋转电位器引脚（灯带亮度）
 #define BUTTON_PIN 4 // 按钮引脚
 #define LED_PIN 6    // RGB 灯引脚
 #define MAX_LED 12   // 定义 RGB 灯的数量为 12 个
@@ -86,6 +87,10 @@ float a_minor_frequencies[NUM_NOTES] = {
   1046.50, // C6
 };
 
+// 状态变量
+int toggleState = 0;       // 切换状态，初始为0
+int lastButtonState = HIGH; // 上一次按钮状态，初始为高电平（未按下）
+
 // 超声波测距函数
 float checkdistance() {
   digitalWrite(TRIG_PIN, LOW);
@@ -98,15 +103,19 @@ float checkdistance() {
   return distance;
 }
 
-// 呼吸灯相关变量
-uint8_t brightness = 0;            // 当前亮度值
-int fadeAmount = 4;                // 亮度变化步长（由电位器控制）
-unsigned long lastUpdateTime = 0;  // 上次更新时间
-const unsigned long updateInterval = 5;  // 更新间隔（5ms）
-
-// 状态变量
-int toggleState = 0;       // 切换状态，初始为0
-int lastButtonState = HIGH; // 上一次按钮状态，初始为高电平（未按下）
+// 定义颜色查找表
+const uint8_t colorTable[10][3] = {
+  {187, 89, 89},    // 红色（莫兰迪红）
+  {202, 131, 89},  // 橙色（莫兰迪橙）
+  {210, 174, 89},  // 黄色（莫兰迪黄）
+  {187, 202, 89},  // 黄绿色（莫兰迪黄绿）
+  {89, 202, 128},  // 绿色（莫兰迪绿）
+  {89, 187, 202},  // 青绿色（莫兰迪青绿）
+  {89, 145, 202},  // 青色（莫兰迪青）
+  {89, 107, 202},  // 蓝青色（莫兰迪蓝青）
+  {114, 89, 202},  // 蓝色（莫兰迪蓝）
+  {145, 89, 202},  // 蓝紫色（莫兰迪蓝紫）
+};
 
 // 将频率映射到颜色的函数
 void mapFrequencyToColor(float frequency) {
@@ -114,9 +123,15 @@ void mapFrequencyToColor(float frequency) {
   float maxFreq = 1760.00; // A6
   float ratio = (frequency - minFreq) / (maxFreq - minFreq);
   ratio = constrain(ratio, 0.0, 1.0);
-  uint8_t red = ratio * 255;
-  uint8_t green = (1.0 - ratio) * 255;
-  uint8_t blue = 128 + (sin(ratio * 2 * PI) * 127);
+
+  // 将频率映射到颜色查找表的索引
+  int colorIndex = (int)(ratio * (sizeof(colorTable) / sizeof(colorTable[0]) - 1));
+
+  // 获取对应的颜色值
+  uint8_t red = colorTable[colorIndex][0];
+  uint8_t green = colorTable[colorIndex][1];
+  uint8_t blue = colorTable[colorIndex][2];
+
   for(uint8_t i = 0; i < MAX_LED; i++) {
     strip.setPixelColor(i, red, green, blue);
   }
@@ -128,36 +143,18 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
   pinMode(POT1_PIN, INPUT);
   pinMode(POT2_PIN, INPUT);
+  pinMode(POT3_PIN, INPUT);
   pinMode(BUTTON_PIN, INPUT_PULLUP);
   strip.begin();
   strip.show();
   Serial.begin(9600);
-  DataFilter::init();  // 初始化数据过滤器
 }
 
 void loop() {
-  unsigned long currentTime = millis();
-  float duration; // 在这里声明 duration 变量
-
-  // 每隔 updateInterval 毫秒更新一次亮度
-  if (currentTime - lastUpdateTime >= updateInterval) {
-    lastUpdateTime = currentTime;
-
-    // 读取滑动电位器值并映射到 fadeAmount
-    int pot1_value = analogRead(POT1_PIN);
-    fadeAmount = map(pot1_value, 0, 1023, 20, 80);  // 映射到 20-80
-
-    // 更新亮度值
-    brightness += fadeAmount;
-
-    // 如果亮度超过 200，重置为 0
-    if (brightness > 200) {
-      brightness = 0;
-    }
-
-    // 应用亮度到 LED 灯带
-    strip.setBrightness(brightness);
-  }
+  // 读取POT3_PIN（A4）的模拟值并控制亮度
+  int pot3_value = analogRead(POT3_PIN);
+  uint8_t brightness = map(pot3_value, 0, 1023, 0, 255);
+  strip.setBrightness(brightness);
 
   // 读取按钮状态
   int currentButtonState = digitalRead(BUTTON_PIN);
@@ -166,10 +163,9 @@ void loop() {
   }
   lastButtonState = currentButtonState;
 
-  // 超声波测距并应用数据过滤
+  // 超声波测距
   float raw_distance = checkdistance();
-  float filtered_distance = filterSuddenChange(raw_distance);  // 过滤突然变化
-  float distance = smoothDistance(filtered_distance);          // 平滑处理
+  float distance = filterSuddenChange(raw_distance);  // 过滤突然变化
   
   int note_index;
   if (distance < 10) {
@@ -210,9 +206,6 @@ void loop() {
   // 映射频率到颜色并显示
   mapFrequencyToColor(base_frequency);
 
-  // 灯光闪烁的时间
-  duration = 0.1 * 400/fadeAmount;
-
   // 串口输出
   Serial.print("Distance: ");
   Serial.print(distance);
@@ -230,5 +223,5 @@ void loop() {
   Serial.print(toggleState);
   Serial.println();
 
-  delay(5);  // 主循环延迟，控制其他操作频率
+  delay(100);  // 主循环延迟，控制其他操作频率
 }

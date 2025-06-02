@@ -409,10 +409,6 @@ button:disabled {
     display: none;
 }
 
-
-
-
-
 /* 移动端响应式设计 - 全新布局 */
 @media (max-width: 768px) {
     /* P5画布全屏优化 */
@@ -923,6 +919,10 @@ button:disabled {
     z-index: 500;
     pointer-events: none;
     overflow: hidden;
+    /* 确保容器总是可见 */
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 .note-popup {
@@ -1017,16 +1017,21 @@ button:disabled {
 .note-popup.re-high { background: linear-gradient(135deg, #80d8ff, #84ffff); }
 .note-popup.mi-high { background: linear-gradient(135deg, #8c9eff, #b388ff); }
 
-/* 移动端适配 */
+/* 移动端适配 - 优化响应式设计 */
 @media (max-width: 768px) {
     .note-popup-container {
         width: 100px;
+        /* 确保在设备模式下仍然可见 */
+        min-width: 80px;
+        z-index: 600; /* 提高层级 */
     }
     
     .note-popup {
         width: 70px;
         height: 50px;
         font-size: 10px;
+        /* 确保弹出框也有足够的层级 */
+        z-index: 601;
     }
     
     .note-popup .note-name {
@@ -1046,12 +1051,15 @@ button:disabled {
 @media (max-width: 480px) {
     .note-popup-container {
         width: 80px;
+        min-width: 60px;
+        z-index: 700; /* 进一步提高层级 */
     }
     
     .note-popup {
         width: 60px;
         height: 45px;
         font-size: 9px;
+        z-index: 701;
     }
     
     .note-popup .note-name {
@@ -1068,20 +1076,40 @@ button:disabled {
     }
 }
 
-/* 横屏模式适配 */
+/* 横屏模式适配 - 特别处理设备模式 */
 @media (orientation: landscape) and (max-height: 600px) {
     .note-popup-container {
         width: 90px;
+        min-width: 70px;
+        z-index: 800; /* 最高层级 */
     }
     
     .note-popup {
         width: 65px;
         height: 40px;
         font-size: 9px;
+        z-index: 801;
     }
     
     .note-popup .emotion-icon {
         width: 16px;
         height: 16px;
+    }
+}
+
+/* 设备模式专用样式 - 针对Chrome DevTools */
+@media screen and (max-device-width: 768px) {
+    .note-popup-container {
+        /* 强制显示 */
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        /* 使用固定定位确保位置 */
+        position: fixed !important;
+        right: 0 !important;
+        top: 0 !important;
+        /* 确保足够的宽度 */
+        min-width: 80px !important;
+        z-index: 999 !important;
     }
 } 

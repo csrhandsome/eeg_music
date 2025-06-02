@@ -9,8 +9,7 @@ from eeg_music.audio.MusicPlayer import MusicPlayer
 from eeg_music.audio.MusicDataRecorder import MusicDataRecorder
 from eeg_music.util.map import map_to_frequency
 from eeg_music.audio.scales import get_closest_note, map_value_to_note
-from eeg_music.server.WebServer import WebServer, run_webserver_thread
-
+from eeg_music.server.FlaskServer import FlaskServer
 
 def arduino_play_by_rate():
     """根据Arduino传感器数据播放指定的频率"""
@@ -27,9 +26,7 @@ def arduino_play_by_rate():
     
     args = parser.parse_args()
     
-    # 创建音乐播放器实例
-    player = MusicPlayer(max_sounds=args.max_sounds)
-    recorder = MusicDataRecorder()
+
     # 创建Arduino读取器
     arduino_reader = None
     if args.arduino_port:
@@ -47,18 +44,28 @@ def arduino_play_by_rate():
     #         name="default"
     #     )
     
+    # 创建FlaskServer实例
+    flaskserver = FlaskServer()
+    flaskserver.set_data_readers(arduino_reader, None)
+    
+    # 启动flask的WebSocket服务器线程
+    # lambda 在这里充当了一个"包裹器"或"适配器"，它把一个需要参数的函数调用转化成了一个不需要参数的函数
+    flask_thread = threading.Thread(
+        target=lambda: flaskserver.run(arduino_reader, None),  # 传递flaskserver实例
+        daemon=True  # 设为守护线程，主线程结束时自动退出
+    )
+    flask_thread.start()
+    
+    # 创建音乐播放器实例
+    player = MusicPlayer(max_sounds=args.max_sounds)
+    
+    # 使用FlaskServer中的MusicDataRecorder实例
+    recorder = flaskserver.get_music_recorder()
+    
+    print(f"开始根据传感器数据演奏音乐，使用{args.instrument}音色...")
     # 连接Arduino
     if arduino_reader.connect():
         try:
-            # 启动WebSocket服务器线程
-            webserver_thread = threading.Thread(
-                target=run_webserver_thread,
-                args=(arduino_reader, None),  # 传递arduino_reader对象而不是current_data快照
-                daemon=True  # 设为守护线程，主线程结束时自动退出
-            )
-            webserver_thread.start()
-            
-            print(f"开始根据传感器数据演奏音乐，使用{args.instrument}音色...")
             start_time = time.time()
             last_play_time = 0
             
@@ -110,10 +117,16 @@ def arduino_play_by_rate():
                                 # 播放音符 - 使用类方法而不是全局函数
                                 
                                 if distance < 50 :
-                                    recorder.record_note(freq, duration, args.instrument, intensity=0.8)
+                                    # 检查录制状态，只有在录制状态下才记录音符
+                                    if flaskserver.is_recording_active():
+                                        recorder.record_note(freq, duration, args.instrument, intensity=0.8)
+                                        print(f"录制音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")
+                                    else:
+                                        print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒 (未录制)")
+                                    
+                                    # 始终播放音符，不管录制状态
                                     player.play_note(freq, duration, args.instrument, intensity=0.8, 
-                                                     wait=False)     
-                                    print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")                          
+                                                     wait=False)
                                 # 更新上次播放时间
                                 last_play_time = current_time
                     except UnicodeDecodeError:

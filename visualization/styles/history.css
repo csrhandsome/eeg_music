@@ -53,6 +53,22 @@
     box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
 }
 
+.file-item.selected {
+    background: rgba(220, 199, 181, 0.8) !important;
+    border-color: #D4C2C2 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(212, 194, 194, 0.5) !important;
+}
+
+.file-item.selected .file-name {
+    color: #1a2332;
+    font-weight: 600;
+}
+
+.file-item.selected .file-info {
+    color: #4a5a6a;
+}
+
 .file-name {
     font-weight: 500;
     color: #2c3e50;

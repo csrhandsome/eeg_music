@@ -50,14 +50,14 @@ function sendRecordingSongName() {
         return;
     }
     
-    // 发送录制歌曲名称到WebSocket服务器
-    if (window.traditionalVisualization && window.traditionalVisualization.socket && window.traditionalVisualization.socket.readyState === WebSocket.OPEN) {
+    // 发送录制歌曲名称到Socket.IO服务器
+    if (window.traditionalVisualization && window.traditionalVisualization.socket && window.traditionalVisualization.socket.connected) {
         const message = {
             type: 'recording_song_name',
             data: songName,
             timestamp: Date.now()
         };
-        window.traditionalVisualization.socket.send(JSON.stringify(message));
+        window.traditionalVisualization.socket.emit('message', message);
         
         // 清空输入框
         songNameInput.value = '';
@@ -75,7 +75,7 @@ function sendRecordingSongName() {
         
         console.log('已发送录制歌曲名称:', songName);
     } else {
-        alert('WebSocket连接未建立,请稍后再试！');
+        alert('Socket.IO连接未建立,请稍后再试！');
     }
 }
 
@@ -166,14 +166,14 @@ function sendSongName() {
         return;
     }
     
-    // 发送到WebSocket服务器
-    if (window.traditionalVisualization && window.traditionalVisualization.socket && window.traditionalVisualization.socket.readyState === WebSocket.OPEN) {
+    // 发送到Socket.IO服务器
+    if (window.traditionalVisualization && window.traditionalVisualization.socket && window.traditionalVisualization.socket.connected) {
         const message = {
             type: 'song_name',
             data: songName,
             timestamp: Date.now()
         };
-        window.traditionalVisualization.socket.send(JSON.stringify(message));
+        window.traditionalVisualization.socket.emit('message', message);
         
         // 清空输入框并关闭面板
         input.value = '';
@@ -183,7 +183,7 @@ function sendSongName() {
         alert('歌曲名称已发送: ' + songName);
         console.log('已发送歌曲名称:', songName);
     } else {
-        alert('WebSocket连接未建立,请稍后再试！');
+        alert('Socket.IO连接未建立,请稍后再试！');
     }
 }
 

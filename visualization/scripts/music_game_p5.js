@@ -222,6 +222,99 @@ class MusicGameVisualizationP5 {
         console.log(`创建飘动情绪: 音符${noteIndex}, 情绪${currentEmotion}, 位置(${floatingEmotion.x}, ${floatingEmotion.y})`);
     }
     
+    // 创建HTML音符弹出框
+    createNotePopup(frequency, scale) {
+        const container = document.getElementById('note-popup-container');
+        if (!container) {
+            console.warn('音符弹出框容器未找到');
+            return;
+        }
+        
+        // 映射频率到音符索引
+        const noteIndex = this.mapFrequencyToNote(frequency, scale);
+        if (noteIndex < 0 || noteIndex >= this.noteNames.length) return;
+        
+        // 防止重复触发：检查冷却时间
+        const currentTime = Date.now();
+        const lastTime = this.lastTriggerTime[`popup_${noteIndex}`] || 0;
+        if (currentTime - lastTime < this.TRIGGER_COOLDOWN) {
+            return; // 还在冷却期，不创建新的弹出框
+        }
+        this.lastTriggerTime[`popup_${noteIndex}`] = currentTime;
+        
+        // 获取音符名称和信息
+        const noteName = this.noteNames[noteIndex];
+        const currentEmotion = this.mindwaveData.mood || 0;
+        const emotionName = this.emotionNames[currentEmotion] || '平静';
+        
+        // 创建弹出框元素
+        const popup = document.createElement('div');
+        popup.className = `note-popup ${noteName}`;
+        
+        // 计算移动端安全的垂直位置
+        const isMobile = window.innerWidth <= 768;
+        const isSmallMobile = window.innerWidth <= 480;
+        const isLandscape = window.innerWidth > window.innerHeight;
+        
+        // 根据设备类型调整弹出框高度
+        let popupHeight = 60; // 默认高度
+        if (isMobile) {
+            popupHeight = isSmallMobile ? 35 : 40;
+            if (isLandscape) popupHeight = 30;
+        }
+        
+        // 计算安全的垂直位置范围
+        const safeTop = 20; // 顶部安全边距
+        const safeBottom = window.innerHeight - popupHeight - 20; // 底部安全边距
+        const safeRange = safeBottom - safeTop;
+        
+        // 确保有足够的空间显示弹出框
+        let randomY;
+        if (safeRange > 0) {
+            randomY = safeTop + Math.random() * safeRange;
+        } else {
+            // 如果空间不足，使用屏幕中央
+            randomY = Math.max(safeTop, (window.innerHeight - popupHeight) / 2);
+        }
+        
+        // 设置弹出框位置
+        popup.style.top = `${randomY}px`;
+        
+        // 设置弹出框内容
+        popup.innerHTML = `
+            <div class="note-name">${noteName.toUpperCase()}</div>
+            <div class="note-frequency">${frequency.toFixed(1)}Hz</div>
+            <img class="emotion-icon" src="assets/emotion/${['happy', 'sad', 'anger', 'peace'][currentEmotion]}.png" alt="${emotionName}" />
+        `;
+        
+        // 添加到容器
+        container.appendChild(popup);
+        
+        // 显示动画
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 10);
+        
+        // 移动端减少显示时间
+        const displayDuration = isMobile ? 1500 : 2000;
+        
+        // 自动隐藏并移除
+        setTimeout(() => {
+            popup.classList.remove('show');
+            popup.classList.add('hide');
+            setTimeout(() => {
+                if (popup.parentNode) {
+                    popup.parentNode.removeChild(popup);
+                }
+            }, 300);
+        }, displayDuration);
+        
+        console.log(`创建音符弹出框: ${noteName}(${frequency.toFixed(1)}Hz), 情绪: ${emotionName}, 位置: ${randomY}px`);
+        
+        // 同时创建飘动情绪
+        this.createFloatingEmotion(noteIndex, frequency);
+    }
+    
     // 绘制右侧音符块
     drawNoteBlocks() {
         for (let i = 0; i < this.noteBlocks.length; i++) {
@@ -492,13 +585,13 @@ class MusicGameVisualizationP5 {
     }
     
     // WebSocket设置 
-    // 从Websocket里面收集arduino和mindwave的数据
+    // 从Socket.IO里面收集arduino和mindwave的数据
     setupWebSocket() {
         // 动态获取服务器地址
         const hostname = window.location.hostname;
-        const socketUrl = `ws://${hostname}:8765`;
+        const socketUrl = `http://${hostname}:5500`;
         
-        console.log(`尝试连接到WebSocket服务器: ${socketUrl}`);
+        console.log(`尝试连接到Socket.IO服务器: ${socketUrl}`);
         
         // 清除旧的重连计时器
         if (this.reconnectTimer) {
@@ -506,28 +599,33 @@ class MusicGameVisualizationP5 {
             this.reconnectTimer = null;
         }
         
-        // 如果已有连接，先关闭
+        // 如果已有连接，先断开
         if (this.socket) {
-            this.socket.close();
+            this.socket.disconnect();
         }
         
-        this.socket = new WebSocket(socketUrl);
+        // 创建Socket.IO连接
+        this.socket = io(socketUrl, {
+            transports: ['websocket', 'polling'],
+            autoConnect: true,
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 3000
+        });
         
         // 连接建立时触发
-        this.socket.onopen = (event) => {
-            console.log('[open] 音游WebSocket连接已建立');
+        this.socket.on('connect', () => {
+            console.log('[connect] 音游Socket.IO连接已建立');
             const statusElement = document.getElementById('status');
             if (statusElement) {
                 statusElement.textContent = '已连接!';
                 statusElement.style.color = 'lime';
             }
-        };
+        });
         
-        // 接收到服务器消息时触发
-        this.socket.onmessage = (event) => {
+        // 接收到服务器消息时触发 - 兼容原WebSocket格式
+        this.socket.on('message', (data) => {
             try {
-                const data = JSON.parse(event.data);
-                
                 // 处理欢迎消息
                 if (data.message && data.message === "Welcome to the WebSocket server!") {
                     console.log("收到服务器欢迎消息");
@@ -565,7 +663,6 @@ class MusicGameVisualizationP5 {
                 if (data.timestamp !== undefined) {
                     this.arduinoData.timestamp = data.timestamp;
                 }
-
 
                 // 更新Mindwave数据
                 if (data.attention !== undefined) {
@@ -627,40 +724,82 @@ class MusicGameVisualizationP5 {
                     this.processArduinoData(data);
                 } 
             } catch (error) {
-                console.error('解析JSON数据错误:', error);
+                console.error('解析数据错误:', error);
             }
-        };
+        });
         
-        // 连接关闭时触发
-        this.socket.onclose = (event) => {
+        // 连接断开时触发
+        this.socket.on('disconnect', (reason) => {
             const statusElement = document.getElementById('status');
             if (statusElement) {
-                if (event.wasClean) {
-                    console.log(`[close] 音游连接已关闭, 代码=${event.code} 原因=${event.reason}`);
-                    statusElement.textContent = `断开连接: ${event.reason || '连接关闭'}`;
-                } else {
-                    console.error('[close] 音游连接中断');
-                    statusElement.textContent = '连接中断，正在尝试重连...';
-                }
+                console.log(`[disconnect] 音游连接已断开, 原因: ${reason}`);
+                statusElement.textContent = `连接断开: ${reason}`;
                 statusElement.style.color = 'red';
             }
-            
-            // 设置自动重连
-            this.reconnectTimer = setTimeout(() => {
-                console.log("尝试重新连接音游WebSocket...");
-                this.setupWebSocket();
-            }, this.RECONNECT_INTERVAL);
-        };
+        });
+        
+        // 重连时触发
+        this.socket.on('reconnect', (attemptNumber) => {
+            console.log(`[reconnect] 音游连接已重连, 尝试次数: ${attemptNumber}`);
+            const statusElement = document.getElementById('status');
+            if (statusElement) {
+                statusElement.textContent = '重连成功!';
+                statusElement.style.color = 'lime';
+            }
+        });
+        
+        // 重连失败时触发
+        this.socket.on('reconnect_failed', () => {
+            console.error('[reconnect_failed] 音游重连失败');
+            const statusElement = document.getElementById('status');
+            if (statusElement) {
+                statusElement.textContent = '重连失败，请刷新页面';
+                statusElement.style.color = 'red';
+            }
+        });
         
         // 发生错误时触发
-        this.socket.onerror = (error) => {
-            console.error(`[error] 音游WebSocket错误: ${error.message}`);
+        this.socket.on('connect_error', (error) => {
+            console.error(`[error] 音游Socket.IO错误: ${error.message}`);
             const statusElement = document.getElementById('status');
             if (statusElement) {
-                statusElement.textContent = `WebSocket错误,正在尝试重连...`;
+                statusElement.textContent = `Socket.IO错误,正在重试...`;
                 statusElement.style.color = 'red';
             }
-        };
+        });
+        
+        // 监听文件名确认消息
+        this.socket.on('filename_confirmation', (data) => {
+            console.log('[music_game] 收到文件名确认:', data);
+            if (data.success) {
+                console.log(`录制文件名 "${data.filename}" 保存成功`);
+                // 可以在这里添加UI反馈
+            }
+        });
+        
+        // 监听歌曲名称确认消息
+        this.socket.on('song_name_confirmation', (data) => {
+            console.log('[music_game] 收到歌曲名称确认:', data);
+            if (data.success) {
+                console.log(`歌曲名称 "${data.song_name}" 发送成功`);
+                // 可以在这里添加UI反馈
+            }
+        });
+        
+        // 监听错误消息
+        this.socket.on('error', (data) => {
+            console.error('[music_game] 收到错误消息:', data.message);
+            // 可以在这里显示错误提示给用户
+        });
+        
+        // 监听录制状态确认消息
+        this.socket.on('recording_state_confirmation', (data) => {
+            console.log('[music_game] 收到录制状态确认:', data);
+            if (data.success) {
+                console.log(`录制状态已更新为: ${data.state} (action: ${data.action})`);
+                // 可以在这里添加UI状态更新
+            }
+        });
     }
     
     // 重置游戏
@@ -677,7 +816,7 @@ class MusicGameVisualizationP5 {
     // 清理资源
     destroy() {
         if (this.socket) {
-            this.socket.close();
+            this.socket.disconnect();
         }
         if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
