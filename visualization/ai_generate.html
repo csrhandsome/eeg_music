@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 样式现在统一在外部CSS文件中管理 -->
+    <title>EEG音乐系统 - AI生成页面</title>
+    <!-- 引入 P5.js -->
+    <script src="p5.min.js"></script>
+    <!-- 引入 Socket.IO 客户端库 -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <!-- 引入独立的CSS文件 -->
+    <link rel="stylesheet" href="styles/music_game_p5.css">
+    <!-- 引入双层堆叠按钮样式 -->
+    <link rel="stylesheet" href="styles/stacked-button.css">
+    <!-- 引入背景样式 -->
+    <link rel="stylesheet" href="styles/body_background.css">
+    <!-- 引入背景增强脚本 -->
+    <script src="scripts/background_enhancer.js"></script>
+    <!-- 引入录制页面导航样式 -->
+    <link rel="stylesheet" href="styles/record_navigation.css">
+</head>
+
+<body>
+    <!-- P5.js 画布容器 -->
+    <div id="p5-canvas-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
+    
+    <!-- 左上角控制按钮 -->
+    <button  onclick="goToPlay()" title="返回主页" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
+        <img src="assets/back.svg" alt="返回" />
+    </button>
+
+    <!-- AI提示输入模态框 -->
+    <div class="filename-modal" id="ai-prompt-modal">
+        <div class="filename-content">
+            <div class="stacked-button-bottom"></div>
+            <div class="stacked-button-top">
+                <div class="filename-title">AI音乐生成</div>
+                <div class="filename-subtitle">描述你想要的音乐,DeepSeek将为你创作</div>
+                <input type="text" class="filename-input" id="ai-prompt-input" placeholder="例如：创作一首快乐的小曲子..." maxlength="200">
+                <div class="filename-buttons">
+                    <button class="filename-btn confirm" onclick="generateMusic()">生成音乐</button>
+                    <button class="filename-btn cancel" onclick="cancelPrompt()">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音乐生成成功提示模态框 -->
+    <div class="success-modal" id="generation-success-modal">
+        <div class="success-content">
+            <div class="stacked-button-bottom"></div>
+            <div class="stacked-button-top">
+                <div class="success-title">保存成功！</div>
+                <div class="success-subtitle">请在心音轨迹中查看</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- AI生成状态提示模态框 -->
+    <div class="success-modal" id="ai-loading-modal">
+        <div class="success-content">
+            <div class="stacked-button-bottom"></div>
+            <div class="stacked-button-top">
+                <div class="success-title">AI正在创作中...</div>
+                <div class="success-subtitle">请稍候，这可能需要几秒钟</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入独立的JavaScript文件 -->
+    <script src="scripts/music_game_p5.js"></script>
+    <script src="scripts/music_game_p5_script.js"></script>
+    <!-- 引入AI生成专用的JavaScript文件 -->
+    <script src="scripts/ai_generate.js"></script>
+</body>
+</html> 

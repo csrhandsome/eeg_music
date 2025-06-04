@@ -108,7 +108,7 @@ class MusicGameVisualizationP5 {
         
         if (isMobile) {
             this.noteBlockWidth = isLandscape ? 60 : 70;
-            this.noteBlockHeight = isLandscape ? 50 : 60; // 增加高度
+            this.noteBlockHeight = isLandscape ? 45 : 50; // 增加高度
             this.noteBlockSpacing = 0; // 贴在一起，间距为0
         } else {
             this.noteBlockWidth = 80;
@@ -220,99 +220,6 @@ class MusicGameVisualizationP5 {
         noteBlock.glow = 255;
         
         console.log(`创建飘动情绪: 音符${noteIndex}, 情绪${currentEmotion}, 位置(${floatingEmotion.x}, ${floatingEmotion.y})`);
-    }
-    
-    // 创建HTML音符弹出框
-    createNotePopup(frequency, scale) {
-        const container = document.getElementById('note-popup-container');
-        if (!container) {
-            console.warn('音符弹出框容器未找到');
-            return;
-        }
-        
-        // 映射频率到音符索引
-        const noteIndex = this.mapFrequencyToNote(frequency, scale);
-        if (noteIndex < 0 || noteIndex >= this.noteNames.length) return;
-        
-        // 防止重复触发：检查冷却时间
-        const currentTime = Date.now();
-        const lastTime = this.lastTriggerTime[`popup_${noteIndex}`] || 0;
-        if (currentTime - lastTime < this.TRIGGER_COOLDOWN) {
-            return; // 还在冷却期，不创建新的弹出框
-        }
-        this.lastTriggerTime[`popup_${noteIndex}`] = currentTime;
-        
-        // 获取音符名称和信息
-        const noteName = this.noteNames[noteIndex];
-        const currentEmotion = this.mindwaveData.mood || 0;
-        const emotionName = this.emotionNames[currentEmotion] || '平静';
-        
-        // 创建弹出框元素
-        const popup = document.createElement('div');
-        popup.className = `note-popup ${noteName}`;
-        
-        // 计算移动端安全的垂直位置
-        const isMobile = window.innerWidth <= 768;
-        const isSmallMobile = window.innerWidth <= 480;
-        const isLandscape = window.innerWidth > window.innerHeight;
-        
-        // 根据设备类型调整弹出框高度
-        let popupHeight = 60; // 默认高度
-        if (isMobile) {
-            popupHeight = isSmallMobile ? 35 : 40;
-            if (isLandscape) popupHeight = 30;
-        }
-        
-        // 计算安全的垂直位置范围
-        const safeTop = 20; // 顶部安全边距
-        const safeBottom = window.innerHeight - popupHeight - 20; // 底部安全边距
-        const safeRange = safeBottom - safeTop;
-        
-        // 确保有足够的空间显示弹出框
-        let randomY;
-        if (safeRange > 0) {
-            randomY = safeTop + Math.random() * safeRange;
-        } else {
-            // 如果空间不足，使用屏幕中央
-            randomY = Math.max(safeTop, (window.innerHeight - popupHeight) / 2);
-        }
-        
-        // 设置弹出框位置
-        popup.style.top = `${randomY}px`;
-        
-        // 设置弹出框内容
-        popup.innerHTML = `
-            <div class="note-name">${noteName.toUpperCase()}</div>
-            <div class="note-frequency">${frequency.toFixed(1)}Hz</div>
-            <img class="emotion-icon" src="assets/emotion/${['happy', 'sad', 'anger', 'peace'][currentEmotion]}.png" alt="${emotionName}" />
-        `;
-        
-        // 添加到容器
-        container.appendChild(popup);
-        
-        // 显示动画
-        setTimeout(() => {
-            popup.classList.add('show');
-        }, 10);
-        
-        // 移动端减少显示时间
-        const displayDuration = isMobile ? 1500 : 2000;
-        
-        // 自动隐藏并移除
-        setTimeout(() => {
-            popup.classList.remove('show');
-            popup.classList.add('hide');
-            setTimeout(() => {
-                if (popup.parentNode) {
-                    popup.parentNode.removeChild(popup);
-                }
-            }, 300);
-        }, displayDuration);
-        
-        console.log(`创建音符弹出框: ${noteName}(${frequency.toFixed(1)}Hz), 情绪: ${emotionName}, 位置: ${randomY}px`);
-        
-        // 同时创建飘动情绪
-        this.createFloatingEmotion(noteIndex, frequency);
     }
     
     // 绘制右侧音符块
@@ -577,7 +484,7 @@ class MusicGameVisualizationP5 {
         this.arduinoData = { ...this.arduinoData, ...data };
         
         // 如果有有效的频率和音阶数据，创建飘动情绪和音符
-        if (data.freq && data.freq > 100 && data.scale) {
+        if (data.freq && data.freq > 100 && data.scale && data.distance < 50) {
             const noteIndex = this.mapFrequencyToNote(data.freq, data.scale);       
             // 创建飘动的情绪图像
             this.createFloatingEmotion(noteIndex, data.freq);

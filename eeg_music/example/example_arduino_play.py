@@ -11,6 +11,32 @@ from eeg_music.util.map import map_to_frequency
 from eeg_music.audio.scales import get_closest_note, map_value_to_note
 from eeg_music.server.FlaskServer import FlaskServer
 
+def test_playback_functionality():
+    """测试历史文件回放功能"""
+    print("测试历史文件回放功能...")
+    
+    # 创建FlaskServer实例（不需要Arduino连接）
+    flaskserver = FlaskServer()
+    
+    # 启动Flask服务器线程
+    flask_thread = threading.Thread(
+        target=lambda: flaskserver.run(None, None),
+        daemon=True
+    )
+    flask_thread.start()
+    
+    print("Flask服务器已启动，等待用户在网页上选择文件进行回放...")
+    print("请打开浏览器访问: http://localhost:5500/history.html")
+    print("选择一个心音轨迹文件来测试回放功能")
+    print("按 Ctrl+C 停止测试")
+    
+    try:
+        # 保持主线程运行
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("\n测试结束")
+
 def arduino_play_by_rate():
     """根据Arduino传感器数据播放指定的频率"""
     # 创建命令行参数解析器
@@ -120,12 +146,12 @@ def arduino_play_by_rate():
                                     # 检查录制状态，只有在录制状态下才记录音符
                                     if flaskserver.is_recording_active():
                                         recorder.record_note(freq, duration, args.instrument, intensity=0.8)
-                                        print(f"录制音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")
-                                    else:
-                                        print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒 (未录制)")
+                                        # print(f"录制音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒")
+                                    # else:
+                                    #     print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒 (未录制)")
                                     
                                     # 始终播放音符，不管录制状态
-                                    player.play_note(freq, duration, args.instrument, intensity=0.8, 
+                                    player.play_wav_note(freq, duration, args.instrument, intensity=0.8, 
                                                      wait=False)
                                 # 更新上次播放时间
                                 last_play_time = current_time
@@ -154,5 +180,11 @@ def arduino_play_by_rate():
 
 
 if __name__ == "__main__":
-    arduino_play_by_rate()
+    import sys
+    
+    # 检查命令行参数
+    if len(sys.argv) > 1 and sys.argv[1] == "--test-playback":
+        test_playback_functionality()
+    else:
+        arduino_play_by_rate()
     # arduino_play_by_scale()

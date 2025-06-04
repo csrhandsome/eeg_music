@@ -146,6 +146,30 @@
     font-size: 14px;
     margin-bottom: 15px;
     box-sizing: border-box;
+    color: #000;
+    background-color: #fff;
+}
+
+/* 设置占位符文字颜色为深灰色 */
+.filename-input::placeholder {
+    color: #333;
+    opacity: 0.8;
+}
+
+/* 兼容不同浏览器的占位符样式 */
+.filename-input::-webkit-input-placeholder {
+    color: #333;
+    opacity: 0.8;
+}
+
+.filename-input::-moz-placeholder {
+    color: #333;
+    opacity: 0.8;
+}
+
+.filename-input:-ms-input-placeholder {
+    color: #333;
+    opacity: 0.8;
 }
 
 .filename-buttons {

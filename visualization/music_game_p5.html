@@ -19,35 +19,34 @@
     <script src="scripts/background_enhancer.js"></script>
 </head>
 <body>
-    <!-- 右侧音符弹出框容器 -->
-    <div class="note-popup-container" id="note-popup-container">
-        <!-- 音符框将通过JavaScript动态创建 -->
-    </div>
     <!-- P5.js 画布容器 -->
     <div id="p5-canvas-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
     
     <!-- 左上角控制按钮 -->
-    <button  onclick="goBack()" title="返回主页" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
+    <button  onclick="goToWelcomepage()" title="返回主页" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
         <img src="assets/back.svg" alt="返回" />
     </button>
     <!-- 右上角控制按钮 -->
     <button  onclick="goToRecord()" title="录制" style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
         <img src="assets/record.svg" alt="录制" />
     </button>
-    
+    <!-- 右上角控制按钮的左边 -->
+    <button  onclick="goToAiGenerate()" title="AI生成" style="position: fixed; top: 20px; right: 90px; z-index: 1000; background: transparent; border: none; padding: 0;">
+        <img src="assets/deepseek_black.png" alt="AI生成" style="width: 33px; height: 33px;"/>
+    </button>
     <!-- 通用浮动控制栏 -->
     <div class="mobile-control-bar">
         <div class="stacked-button-container control-bar" id="button-group-container">
             <div class="stacked-button-bottom control-bar"></div>
             <div class="stacked-button-top control-bar">
                 <div class="button-group-content">
-                    <div class="action-button primary" onclick="toggleMobileStatus()" role="button" tabindex="0">
+                    <div class="action-button primary" onclick="goToPlay()" role="button" tabindex="0">
                         <img src="assets/music.svg" alt="音乐" style="width: 16px; height: 16px;" />
-                        <span>开始播放</span>
+                        <span>心音演奏</span>
                     </div>
                     <div class="action-button secondary" onclick="goToHistory()" role="button" tabindex="0">
-                        <img src="assets/history.svg" alt="历史记录" style="width: 16px; height: 16px;" />
-                        <span>历史记录</span>
+                        <img src="assets/history.svg" alt="心音轨迹" style="width: 16px; height: 16px;" />
+                        <span>心音轨迹</span>
                     </div>
                 </div>
             </div>
@@ -55,7 +54,7 @@
     </div> 
     
     <!-- 移动端状态显示 - 简化长条 -->
-    <div class="mobile-status-center" style="display: none;">
+    <!-- <div class="mobile-status-center" style="display: none;">
         <div class="status-card">
             <div class="status-content">
                 <span class="status-label">连接状态:</span>
@@ -66,9 +65,8 @@
             </div>
             <button class="close-status-btn" onclick="toggleMobileStatus()">×</button>
         </div>
-    </div>
+    </div> -->
        
-    
     <!-- 引入音游逻辑 -->
     <script src="scripts/music_game_p5.js"></script>
     <!-- 引入独立的JavaScript文件 -->

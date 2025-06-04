@@ -29,7 +29,7 @@ class EEGNetRunner:
         num_epochs: 训练轮数
         
         返回:
-        训练历史记录 (dict): 包含训练和验证的损失与准确率
+        训练心音轨迹 (dict): 包含训练和验证的损失与准确率
         """
         history = {
             'train_loss': [],

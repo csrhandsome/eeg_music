@@ -18,7 +18,7 @@ class MusicDataRecorder:
         self.save_format = save_format
         self.note_data_buffer = []
         self.session_start_time = time.time()
-        self.session_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.session_timestamp = datetime.now().strftime("%m-%d_%H-%M")
         
         # 确保目录存在
         self.data_dir = os.path.join('data', 'music_notes')
@@ -74,7 +74,7 @@ class MusicDataRecorder:
         if not self.note_data_buffer:
             return
         
-        filename = f"music_notes_{self.session_timestamp}_{self.session_name}"
+        filename = f"{self.session_name}"
         
         if self.save_format == "csv":
             self._save_to_csv(filename)

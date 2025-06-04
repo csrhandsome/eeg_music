@@ -58,44 +58,158 @@ EEG音乐系统
 
 ## 🚀 安装指南
 
+### 环境要求
+- **Python**: 3.9+ (推荐3.9.21)
+- **操作系统**: Linux (推荐), Windows, macOS
+- **内存**: 至少4GB RAM
+- **存储**: 至少2GB可用空间
+
 ### 1. 克隆项目
 ```bash
 git clone <repository-url>
 cd eeg_music
 ```
 
-### 2. 创建Conda环境
-```bash
-# 运行环境配置脚本
-bash scripts/environment.sh
-```
+### 2. 创建Python虚拟环境
 
-或手动创建：
+#### 方法1：使用Conda (推荐)
 ```bash
 # 创建conda环境
 conda create -n eeg_music python=3.9.21
 conda activate eeg_music
-
-# 安装依赖
-pip install pygame pyserial torcheeg moabb websockets aiohttp
-pip install Flask==2.3.3
-pip install Flask-SocketIO==5.3.6
-pip install Flask-CORS==4.0.0
-pip install python-socketio==5.8.0
-pip install eventlet==0.33.3 
-
 ```
 
-### 3. 硬件连接
-- 将Mindwave设备连接到 `/dev/ttyACM0`
-- 将Arduino设备连接到 `/dev/ttyUSB0`
-- 确保设备权限正确：
+#### 方法2：使用虚拟环境
 ```bash
+# 创建虚拟环境
+python3 -m venv eeg_music_env
+source eeg_music_env/bin/activate  # Linux/macOS
+# 或 Windows: eeg_music_env\Scripts\activate
+```
+
+### 3. 安装依赖包
+
+#### 方法1：使用requirements.txt (推荐)
+```bash
+# 安装所有依赖
+pip install -r requirements.txt
+```
+
+#### 方法2：手动安装核心依赖
+```bash
+# 基础音频和串口库
+pip install pygame>=2.1.0 pyserial>=3.5 numpy>=1.21.0
+
+# Web服务器组件
+pip install Flask==2.3.3 Flask-SocketIO==5.3.6 Flask-CORS==4.0.0
+pip install python-socketio==5.8.0 eventlet==0.33.3
+
+# 异步HTTP和WebSocket
+pip install aiohttp>=3.8.0 websockets>=10.0
+
+# 机器学习和脑电处理 (可选)
+pip install torch>=1.13.0 torcheeg>=1.0.11 moabb>=0.4.6
+pip install scikit-learn>=1.1.0 matplotlib>=3.5.0
+
+# 其他工具
+pip install tqdm>=4.64.0
+```
+
+### 4. 验证安装
+```bash
+# 检查Python包
+python -c "import pygame, serial, flask, numpy; print('核心依赖安装成功!')"
+
+# 检查串口设备 (Linux)
+ls /dev/tty*
+
+# 测试音频系统
+python -c "import pygame; pygame.mixer.init(); print('音频系统正常!')"
+```
+
+### 5. 硬件连接与配置
+
+#### Arduino设置
+```bash
+# 连接Arduino到USB端口
+# 通常会显示为 /dev/ttyUSB0 (Linux) 或 COM3 (Windows)
+
+# 检查Arduino连接
+python -m eeg_music.reader.ArduinoSerialReader -l
+
+# 设置设备权限 (Linux)
+sudo chmod 666 /dev/ttyUSB0
+sudo usermod -a -G dialout $USER  # 添加用户到dialout组
+```
+
+#### Mindwave脑电设备设置
+```bash
+# 连接Mindwave设备
+# 通常会显示为 /dev/ttyACM0 (Linux) 或 COM4 (Windows)
+
+# 设置设备权限 (Linux)
+sudo chmod 666 /dev/ttyACM0
+
+# 测试脑电设备连接
+python -m eeg_music.example.example_record --test-connection
+```
+
+#### 设备权限配置 (Linux)
+```bash
+# 方法1：临时权限 (重启后失效)
 sudo chmod 666 /dev/ttyUSB0
 sudo chmod 666 /dev/ttyACM0
+
+# 方法2：永久权限 (推荐)
+sudo usermod -a -G dialout $USER
+sudo usermod -a -G tty $USER
+# 注销并重新登录使组权限生效
+
+# 方法3：创建udev规则
+echo 'SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", MODE="0666"' | sudo tee /etc/udev/rules.d/99-arduino.rules
+sudo udevadm control --reload-rules
 ```
 
-## 🎮 使用方法
+## ⚡ 快速开始
+
+### 🎵 最简单的开始方式
+
+1. **激活环境并启动Arduino音乐播放**：
+```bash
+# 激活conda环境
+conda activate eeg_music
+
+# 启动Arduino音乐播放（钢琴音色）
+python -m eeg_music.example.example_arduino_play -i piano
+```
+
+2. **打开Web可视化**：
+```bash
+# 在新终端中启动Web服务器
+python3 -m http.server 5500
+
+# 浏览器访问: http://localhost:5500/visualization/arduino_visualization.html
+```
+
+3. **开始演奏**：
+   - 在Arduino传感器前挥手控制距离
+   - 调节电位器改变音符参数
+   - 观察Web界面的实时数据显示
+
+### 🔧 常用命令
+
+```bash
+# 1. 检查设备连接
+python -m eeg_music.reader.ArduinoSerialReader -l
+
+# 2. 测试音频系统
+python -c "import pygame; pygame.mixer.init(); print('音频系统正常!')"
+
+# 3. 启动完整的可视化系统
+bash scripts/start_eeg_music.sh
+```
+
+## 🎮 详细使用方法
 
 ### 快速启动指南
 运行启动脚本查看所有可用命令：
@@ -220,34 +334,147 @@ ssh three@192.168.5.11  # 树莓派5
 
 ## 🔧 故障排除
 
-### 常见问题
+### 安装问题
 
-1. **设备连接失败**
+1. **依赖包安装失败**
+   ```bash
+   # 更新pip
+   pip install --upgrade pip setuptools wheel
+   
+   # 如果torch安装失败，尝试CPU版本
+   pip install torch==1.13.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
+   
+   # 如果torcheeg安装失败，使用conda
+   conda install -c conda-forge torcheeg
+   ```
+
+2. **Python版本兼容性**
+   ```bash
+   # 检查Python版本
+   python --version  # 需要3.9+
+   
+   # 如果版本过低，安装新版本
+   conda install python=3.9.21
+   ```
+
+### 设备连接问题
+
+3. **Arduino设备连接失败**
    ```bash
    # 检查设备连接
    ls -la /dev/tty*
+   dmesg | grep tty  # 查看设备日志
+   
    # 修改设备权限
    sudo chmod 666 /dev/ttyUSB0
-   sudo chmod 666 /dev/ttyACM0
+   sudo usermod -a -G dialout $USER
+   
+   # 测试串口通信
+   python -c "import serial; s=serial.Serial('/dev/ttyUSB0', 9600); print('连接成功')"
    ```
 
-2. **音频播放问题**
+4. **Mindwave脑电设备连接**
+   ```bash
+   # 检查设备状态
+   ls -la /dev/ttyACM*
+   
+   # 设置权限
+   sudo chmod 666 /dev/ttyACM0
+   
+   # 检查设备信息
+   udevadm info -a -n /dev/ttyACM0
+   ```
+
+### 音频问题
+
+5. **音频播放问题**
    ```bash
    # 检查音频系统
    pulseaudio --check
+   
    # 重启音频服务
    pulseaudio --kill && pulseaudio --start
+   
+   # 测试pygame音频
+   python -c "import pygame; pygame.mixer.init(); print('音频初始化成功')"
+   
+   # 如果还有问题，尝试ALSA
+   export SDL_AUDIODRIVER=alsa
    ```
 
-3. **脑电设备连接**
-   - 确保电极湿润
-   - 检查设备配对状态
-   - 验证串口波特率(57600)
+6. **音频延迟问题**
+   ```bash
+   # 降低音频缓冲区大小
+   export SDL_AUDIODRIVER=pulse
+   export PULSE_LATENCY_MSEC=30
+   ```
 
-4. **Arduino通信问题**
-   - 检查波特率设置(9600)
-   - 验证Arduino代码上传
-   - 检查传感器连接
+### 网络和Web服务问题
+
+7. **Flask服务器启动失败**
+   ```bash
+   # 检查端口占用
+   netstat -tlnp | grep :5500
+   
+   # 杀死占用端口的进程
+   sudo kill -9 $(lsof -t -i:5500)
+   
+   # 更换端口启动
+   python3 -m http.server 8000
+   ```
+
+8. **WebSocket连接失败**
+   ```bash
+   # 检查防火墙设置
+   sudo ufw status
+   sudo ufw allow 5500
+   
+   # 检查网络连接
+   ping localhost
+   curl http://localhost:5500
+   ```
+
+### 性能问题
+
+9. **CPU占用过高**
+   ```bash
+   # 降低采样频率
+   python -m eeg_music.example.example_arduino_play --rate 0.5
+   
+   # 减少最大声音数量
+   python -m eeg_music.example.example_arduino_play --max-sounds 50
+   ```
+
+10. **内存不足**
+    ```bash
+    # 检查内存使用
+    free -h
+    
+    # 清理Python缓存
+    find . -type d -name __pycache__ -exec rm -r {} +
+    
+    # 重启Python环境
+    conda deactivate && conda activate eeg_music
+    ```
+
+### 数据问题
+
+11. **数据记录失败**
+    ```bash
+    # 检查数据目录权限
+    ls -la data/
+    chmod 755 data/
+    
+    # 手动创建目录
+    mkdir -p data/eeg data/music_notes
+    ```
+
+12. **Arduino通信问题**
+    - 检查波特率设置(9600)
+    - 验证Arduino代码上传
+    - 检查传感器连接
+    - 重新插拔USB线
+    - 重启Arduino设备
 
 ## 📁 项目结构
 

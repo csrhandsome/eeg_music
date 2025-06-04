@@ -27,6 +27,7 @@
     padding: 10px;
     background: rgba(248, 249, 250, 0.2);
     direction: rtl;
+    transition: all 0.3s ease;
 }
 
 .file-list-content {
@@ -67,6 +68,35 @@
 
 .file-item.selected .file-info {
     color: #4a5a6a;
+}
+
+/* 播放中状态样式 */
+.file-item.playing {
+    background: rgba(76, 175, 80, 0.7) !important;
+    border-color: #4CAF50 !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4) !important;
+    animation: playingPulse 2s ease-in-out infinite;
+}
+
+.file-item.playing .file-name {
+    color: white;
+    font-weight: 600;
+}
+
+.file-item.playing .file-info {
+    color: #e8f5e8;
+}
+
+/* 播放中的脉冲动画 */
+@keyframes playingPulse {
+    0%, 100% {
+        box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    }
+    50% {
+        box-shadow: 0 6px 30px rgba(76, 175, 80, 0.6);
+        transform: translateY(-3px);
+    }
 }
 
 .file-name {

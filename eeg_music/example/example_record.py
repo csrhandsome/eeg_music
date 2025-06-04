@@ -15,7 +15,6 @@ def record_data():
     parser.add_argument('-m', '--mood', default='default', help='被试者的情绪')
     args = parser.parse_args()
     
-    
     # 创建串口读取器实例
     reader = MindwaveSerialReader(
         port=args.port,

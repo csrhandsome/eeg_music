@@ -909,207 +909,39 @@ button:disabled {
     }
 }
 
-/* 右侧音符弹出框样式 */
-.note-popup-container {
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: 120px;
-    height: 100vh;
-    z-index: 500;
-    pointer-events: none;
-    overflow: hidden;
-    /* 确保容器总是可见 */
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
-
-.note-popup {
-    position: absolute;
-    right: -100px;
-    width: 80px;
-    height: 60px;
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid #333;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(5px);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    font-weight: bold;
-    font-size: 12px;
-    color: #333;
-}
-
-.note-popup.show {
-    right: 10px;
-    animation: noteSlideIn 0.5s ease-out;
-}
-
-.note-popup.hide {
-    right: -100px;
-    animation: noteSlideOut 0.3s ease-in;
-}
-
-.note-popup .note-name {
-    font-size: 14px;
-    font-weight: bold;
-    margin-bottom: 2px;
-    color: #2c3e50;
-}
-
-.note-popup .note-frequency {
-    font-size: 10px;
-    color: #7f8c8d;
-}
-
-.note-popup .emotion-icon {
-    width: 24px;
-    height: 24px;
-    margin-top: 4px;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* 音符弹出动画 */
-@keyframes noteSlideIn {
-    0% {
-        right: -100px;
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    50% {
-        right: 15px;
-        transform: scale(1.1);
-    }
-    100% {
-        right: 10px;
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-@keyframes noteSlideOut {
-    0% {
-        right: 10px;
-        opacity: 1;
-        transform: scale(1);
-    }
-    100% {
-        right: -100px;
-        opacity: 0;
-        transform: scale(0.8);
-    }
-}
-
-/* 不同音符的颜色主题 */
-.note-popup.do { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); }
-.note-popup.re { background: linear-gradient(135deg, #4ecdc4, #7dd3d8); }
-.note-popup.mi { background: linear-gradient(135deg, #45b7d1, #6bb6ff); }
-.note-popup.fa { background: linear-gradient(135deg, #96ceb4, #b8e6d2); }
-.note-popup.sol { background: linear-gradient(135deg, #feca57, #ff9ff3); }
-.note-popup.la { background: linear-gradient(135deg, #ff9ff3, #feca57); }
-.note-popup.si { background: linear-gradient(135deg, #a8e6cf, #dcedc1); }
-.note-popup.do-high { background: linear-gradient(135deg, #ff8a80, #ffab91); }
-.note-popup.re-high { background: linear-gradient(135deg, #80d8ff, #84ffff); }
-.note-popup.mi-high { background: linear-gradient(135deg, #8c9eff, #b388ff); }
-
-/* 移动端适配 - 优化响应式设计 */
-@media (max-width: 768px) {
-    .note-popup-container {
-        width: 100px;
-        /* 确保在设备模式下仍然可见 */
-        min-width: 80px;
-        z-index: 600; /* 提高层级 */
+/* 横屏模式适配 */
+@media (orientation: landscape) and (max-height: 600px) {
+    .mobile-status-center {
+        top: 60px;
     }
     
-    .note-popup {
-        width: 70px;
-        height: 50px;
-        font-size: 10px;
-        /* 确保弹出框也有足够的层级 */
-        z-index: 601;
-    }
-    
-    .note-popup .note-name {
-        font-size: 12px;
-    }
-    
-    .note-popup .note-frequency {
-        font-size: 8px;
-    }
-    
-    .note-popup .emotion-icon {
-        width: 20px;
-        height: 20px;
-    }
-}
-
-@media (max-width: 480px) {
-    .note-popup-container {
-        width: 80px;
-        min-width: 60px;
-        z-index: 700; /* 进一步提高层级 */
-    }
-    
-    .note-popup {
-        width: 60px;
+    .status-card {
+        margin: 0 20px;
+        min-width: auto;
+        max-width: calc(100% - 40px);
+        padding: 0 40px 0 15px;
         height: 45px;
-        font-size: 9px;
-        z-index: 701;
     }
     
-    .note-popup .note-name {
+    .status-content {
+        gap: 10px;
         font-size: 11px;
     }
     
-    .note-popup .note-frequency {
-        font-size: 7px;
+    .status-label {
+        font-size: 11px;
     }
     
-    .note-popup .emotion-icon {
-        width: 18px;
-        height: 18px;
-    }
-}
-
-/* 横屏模式适配 - 特别处理设备模式 */
-@media (orientation: landscape) and (max-height: 600px) {
-    .note-popup-container {
-        width: 90px;
-        min-width: 70px;
-        z-index: 800; /* 最高层级 */
+    #mobile-status-text,
+    #mobile-arduino-data {
+        font-size: 11px;
+        padding: 1px 6px;
     }
     
-    .note-popup {
-        width: 65px;
-        height: 40px;
-        font-size: 9px;
-        z-index: 801;
-    }
-    
-    .note-popup .emotion-icon {
-        width: 16px;
-        height: 16px;
-    }
-}
-
-/* 设备模式专用样式 - 针对Chrome DevTools */
-@media screen and (max-device-width: 768px) {
-    .note-popup-container {
-        /* 强制显示 */
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        /* 使用固定定位确保位置 */
-        position: fixed !important;
-        right: 0 !important;
-        top: 0 !important;
-        /* 确保足够的宽度 */
-        min-width: 80px !important;
-        z-index: 999 !important;
+    .close-status-btn {
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        right: 12px;
     }
 } 

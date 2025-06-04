@@ -192,7 +192,7 @@ function showSuccessMessage() {
     const subtitle = modal.querySelector('.success-subtitle');
     
     title.textContent = '保存成功！';
-    subtitle.textContent = '请在历史记录中查看';
+    subtitle.textContent = '请在心音轨迹中查看';
     modal.classList.add('show');
 }
 
@@ -346,6 +346,14 @@ function goToPlay() {
     window.location.href = 'music_game_p5.html';
 }
 
+function goToWelcomepage() {
+    window.location.href = 'welcomepage.html';
+}
+
+function goToAiGenerate() {
+    window.location.href = 'ai_generate.html';
+}
+
 // ==================== 移动端输入面板功能 ====================
 
 // 移动端专用函数
@@ -446,145 +454,10 @@ function updateEmotionDisplay(emotion) {
     }
 }
 
-// 音符弹出框管理
-function clearNotePopups() {
-    const container = document.getElementById('note-popup-container');
-    if (container) {
-        // 清除所有现有的弹出框
-        while (container.firstChild) {
-            container.removeChild(container.firstChild);
-        }
-    }
-}
-
-// 手动创建测试音符弹出框（用于调试）
-function createTestNotePopup(noteIndex = 0, frequency = 440) {
-    if (window.musicGame) {
-        const scale = 'C Major';
-        window.musicGame.createNotePopup(frequency, scale);
-    }
-}
-
-// 检查音符弹出框容器状态（调试用）
-function checkNotePopupContainer() {
-    const container = document.getElementById('note-popup-container');
-    if (!container) {
-        console.error('❌ 音符弹出框容器未找到');
-        return false;
-    }
-    
-    const styles = window.getComputedStyle(container);
-    const rect = container.getBoundingClientRect();
-    
-    console.log('🔍 音符弹出框容器状态检查:');
-    console.log('- 容器存在:', !!container);
-    console.log('- 显示状态 (display):', styles.display);
-    console.log('- 可见性 (visibility):', styles.visibility);
-    console.log('- 透明度 (opacity):', styles.opacity);
-    console.log('- Z-index:', styles.zIndex);
-    console.log('- 位置信息:', {
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height
-    });
-    console.log('- 背景颜色:', styles.backgroundColor);
-    console.log('- 定位方式:', styles.position);
-    
-    // 检查是否被其他元素遮挡
-    const isVisible = rect.width > 0 && rect.height > 0 && 
-                     styles.display !== 'none' && 
-                     styles.visibility !== 'hidden' && 
-                     parseFloat(styles.opacity) > 0;
-    
-    console.log('- 容器是否可见:', isVisible ? '✅' : '❌');
-    
-    // 检查设备模式
-    const isDeviceMode = window.innerWidth <= 768 || window.innerHeight <= 600;
-    console.log('- 当前是否为设备模式:', isDeviceMode ? '📱' : '💻');
-    
-    return isVisible;
-}
-
-// 强制显示音符弹出框容器（紧急修复）
-function forceShowNotePopupContainer() {
-    const container = document.getElementById('note-popup-container');
-    if (!container) {
-        console.error('❌ 音符弹出框容器未找到，无法强制显示');
-        return false;
-    }
-    
-    // 强制设置样式
-    container.style.display = 'block';
-    container.style.visibility = 'visible';
-    container.style.opacity = '1';
-    container.style.position = 'fixed';
-    container.style.right = '0';
-    container.style.top = '0';
-    container.style.zIndex = '999';
-    
-    console.log('💪 已强制显示音符弹出框容器');
-    return true;
-}
-
-// 测试多个音符弹出框
-function testMultipleNotePopups() {
-    if (!window.musicGame) {
-        console.error('音游系统未初始化');
-        return;
-    }
-    
-    console.log('🧪 开始测试多个音符弹出框');
-    
-    // 先检查容器状态
-    checkNotePopupContainer();
-    
-    // 如果容器不可见，尝试强制显示
-    const container = document.getElementById('note-popup-container');
-    if (container && window.getComputedStyle(container).display === 'none') {
-        forceShowNotePopupContainer();
-    }
-    
-    // 测试不同的音符
-    const testFrequencies = [261.63, 293.66, 329.63, 349.23, 392.00]; // C D E F G
-    const scale = 'C Major';
-    
-    testFrequencies.forEach((freq, index) => {
-        setTimeout(() => {
-            console.log(`测试音符 ${index + 1}: ${freq}Hz`);
-            window.musicGame.createNotePopup(freq, scale);
-        }, index * 800); // 间隔800ms
-    });
-}
-
-// 手动创建测试飘动情绪SVG（用于调试）
-function createTestFloatingEmotion(noteIndex = 0, frequency = 440) {
-    if (window.musicGame) {
-        // 设置测试情绪
-        window.musicGame.mindwaveData.mood = Math.floor(Math.random() * 4);
-        window.musicGame.createFloatingEmotion(noteIndex, frequency);
-        console.log(`创建测试飘动情绪: 音符${noteIndex}, 频率${frequency}Hz, 情绪${window.musicGame.mindwaveData.mood}`);
-    }
-}
-
-// 测试所有音符块
-function testAllNoteBlocks() {
-    if (window.musicGame) {
-        for (let i = 0; i < 10; i++) {
-            setTimeout(() => {
-                const frequency = 261.63 + i * 50; // 简单的频率递增
-                createTestFloatingEmotion(i, frequency);
-            }, i * 500); // 每500ms创建一个
-        }
-    }
-}
 
 // 窗口大小改变时重新计算音符弹出框位置
 window.addEventListener('resize', function() {
-    // 清除现有弹出框，避免位置错乱
-    clearNotePopups();
+    // 由于使用P5.js绘制音符块，窗口调整会自动重新计算位置
 });
 
 // ==================== 事件监听器设置 ====================
@@ -640,81 +513,9 @@ document.addEventListener('DOMContentLoaded', function() {
         timerDisplay.textContent = '00:00:00';
     }
     
-    // 确保音符弹出框容器存在
-    const container = document.getElementById('note-popup-container');
-    if (!container) {
-        console.warn('音符弹出框容器未找到');
-    } else {
-        console.log('✅ 音符弹出框容器已找到');
-        
-        // 检查容器初始状态
-        setTimeout(() => {
-            console.log('🔍 执行音符弹出框容器初始状态检查...');
-            const isVisible = checkNotePopupContainer();
-            
-            if (!isVisible) {
-                console.warn('⚠️ 音符弹出框容器不可见，尝试修复...');
-                forceShowNotePopupContainer();
-                
-                // 再次检查
-                setTimeout(() => {
-                    const fixedVisible = checkNotePopupContainer();
-                    if (fixedVisible) {
-                        console.log('✅ 音符弹出框容器修复成功');
-                    } else {
-                        console.error('❌ 音符弹出框容器修复失败');
-                    }
-                }, 100);
-            }
-        }, 500);
-        
-        // 添加窗口大小变化时的检查
-        let resizeTimer;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                console.log('📏 窗口大小改变，重新检查音符弹出框容器状态');
-                const isVisible = checkNotePopupContainer();
-                if (!isVisible) {
-                    console.warn('⚠️ 窗口大小改变后容器不可见，尝试修复...');
-                    forceShowNotePopupContainer();
-                }
-            }, 300);
-        });
-    }
-    
     // 初始化情绪显示
     updateEmotionDisplay(0);
     
-    console.log('音符弹出框系统初始化完成');
+    console.log('音游系统初始化完成 - 使用P5.js飘动情绪显示');
     
-    // 添加键盘快捷键用于测试
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 't' || e.key === 'T') {
-            // 按T键测试单个飘动情绪
-            const randomNote = Math.floor(Math.random() * 10);
-            const randomFreq = 200 + Math.random() * 1000;
-            createTestFloatingEmotion(randomNote, randomFreq);
-        } else if (e.key === 'a' || e.key === 'A') {
-            // 按A键测试所有音符块
-            testAllNoteBlocks();
-        } else if (e.key === 'p' || e.key === 'P') {
-            // 按P键测试音符弹出框
-            const randomFreq = 261.63 + Math.random() * 400; // C4-G5范围
-            createTestNotePopup(0, randomFreq);
-        } else if (e.key === 'm' || e.key === 'M') {
-            // 按M键测试多个音符弹出框
-            testMultipleNotePopups();
-        } else if (e.key === 'c' || e.key === 'C') {
-            // 按C键检查容器状态
-            checkNotePopupContainer();
-        } else if (e.key === 'f' || e.key === 'F') {
-            // 按F键强制显示容器
-            forceShowNotePopupContainer();
-        } else if (e.key === 'r' || e.key === 'R') {
-            // 按R键重置所有弹出框
-            clearNotePopups();
-            console.log('🧹 已清除所有音符弹出框');
-        }
-    });
 });

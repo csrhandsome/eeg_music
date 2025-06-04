@@ -168,14 +168,25 @@ void loop() {
   float distance = filterSuddenChange(raw_distance);  // 过滤突然变化
   
   int note_index;
-  if (distance < 10) {
+  if (distance < 10.0) {
     note_index = 0;
-  } else if (distance >= 50) {
+  } else if (distance >= 50.0) {
     note_index = NUM_NOTES - 1;
   } else {
-    note_index = floor((distance - 10) / ((50.0 - 10.0) / (NUM_NOTES)));
-    if (note_index < 0) note_index = 0;
+    note_index = floor((distance - 5.0) / ((45.0 - 5.0) / (NUM_NOTES)));
+    if (note_index <= 0) note_index = 0;
     if (note_index >= NUM_NOTES) note_index = NUM_NOTES - 1;
+  }
+
+  int light_index;
+  if (distance < 10.0) {
+    light_index = 0;
+  } else if (distance >= 50.0) {
+    light_index = NUM_NOTES - 1;
+  } else {
+    light_index = floor((distance - 10.0) / ((50.0 - 10.0) / (NUM_NOTES)));
+    if (light_index <= 0) light_index = 0;
+    if (light_index >= NUM_NOTES) light_index = NUM_NOTES - 1;
   }
 
   // 读取旋转电位器选择音阶
@@ -202,9 +213,9 @@ void loop() {
 
   // 计算调整后的频率
   float base_frequency = selected_frequencies[note_index];
-
+  float light_frequency = selected_frequencies[light_index];
   // 映射频率到颜色并显示
-  mapFrequencyToColor(base_frequency);
+  mapFrequencyToColor(light_frequency);
 
   // 串口输出
   Serial.print("Distance: ");
@@ -223,5 +234,5 @@ void loop() {
   Serial.print(toggleState);
   Serial.println();
 
-  delay(100);  // 主循环延迟，控制其他操作频率
+  delay(50);  // 主循环延迟，控制其他操作频率
 }

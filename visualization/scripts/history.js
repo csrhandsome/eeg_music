@@ -35,7 +35,11 @@ function initializeSocket() {
             console.log('[history] 收到文件选择确认:', data);
             if (data.success) {
                 // 可以在这里添加UI反馈，比如高亮选中的文件
-                console.log(`文件 "${data.selected_file}" 选择成功`);
+                console.log(`文件 "${data.selected_file}" 选择成功，开始回放`);
+                showPlaybackStatus('正在回放: ' + data.selected_file);
+                
+                // 隐藏文件列表
+                hideFileList();
             }
         });
         
@@ -49,6 +53,31 @@ function initializeSocket() {
             }
         });
         
+        // 监听回放结束消息
+        historySocket.on('playback_finished', (data) => {
+            console.log('[history] 收到回放结束消息:', data);
+            showPlaybackStatus('回放完成');
+            
+            // 重新显示文件列表
+            showFileList();
+            
+            // 清除播放状态
+            clearPlayingStatus();
+            
+            setTimeout(() => {
+                hidePlaybackStatus();
+            }, 3000);
+        });
+        
+        // 监听实时数据消息（用于可视化）
+        historySocket.on('message', (data) => {
+            // 如果存在音游可视化实例，转发数据给它处理
+            if (window.musicGame && data.playback_mode) {
+                // 处理回放数据，触发可视化效果
+                window.musicGame.processArduinoData(data);
+            }
+        });
+        
         // 监听错误消息
         historySocket.on('error', (data) => {
             console.error('[history] 收到错误消息:', data.message);
@@ -58,6 +87,59 @@ function initializeSocket() {
     } catch (error) {
         console.error('[history] Socket.IO初始化失败:', error);
         return null;
+    }
+}
+
+// 显示回放状态
+function showPlaybackStatus(message) {
+    // 创建或更新状态显示元素
+    let statusElement = document.getElementById('playback-status');
+    if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'playback-status';
+        statusElement.style.cssText = `
+            position: fixed;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 1001;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        document.body.appendChild(statusElement);
+    }
+    statusElement.textContent = message;
+    statusElement.style.display = 'block';
+}
+
+// 隐藏回放状态
+function hidePlaybackStatus() {
+    const statusElement = document.getElementById('playback-status');
+    if (statusElement) {
+        statusElement.style.display = 'none';
+    }
+}
+
+// 隐藏文件列表
+function hideFileList() {
+    const historyContainer = document.querySelector('.history-container');
+    if (historyContainer) {
+        historyContainer.style.display = 'none';
+        historyContainer.style.transition = 'all 0.3s ease';
+    }
+}
+
+// 显示文件列表
+function showFileList() {
+    const historyContainer = document.querySelector('.history-container');
+    if (historyContainer) {
+        historyContainer.style.display = 'flex';
+        historyContainer.style.transition = 'all 0.3s ease';
     }
 }
 
@@ -144,6 +226,8 @@ function selectFile(fileName) {
         const fileNameElement = item.querySelector('.file-name');
         if (fileNameElement && fileNameElement.textContent === fileName) {
             item.classList.add('selected');
+            // 添加播放中的状态
+            item.classList.add('playing');
         }
     });
     
@@ -163,10 +247,15 @@ function selectFile(fileName) {
             historySocket = initializeSocket();
         }
     }
-    
-    // 这里可以添加文件选择后的处理逻辑，比如播放该文件的音乐记录
-    // 例如：跳转到播放页面并传递文件名参数
-    // window.location.href = `music_game_p5.html?file=${encodeURIComponent(fileName)}`;
+}
+
+// 清除所有文件的播放状态
+function clearPlayingStatus() {
+    const playingItems = document.querySelectorAll('.file-item.playing');
+    playingItems.forEach(item => {
+        item.classList.remove('playing');
+        item.classList.remove('selected');
+    });
 }
 
 // 页面加载完成后初始化文件列表

@@ -3,7 +3,7 @@
 
 """
 EEG音乐系统 - Flask服务器
-基于原WebServer.py，使用Flask + Socket.IO替代原生WebSocket，保持接口兼容性
+基于原WebServer.py,使用Flask + Socket.IO替代原生WebSocket,保持接口兼容性
 """
 
 import os
@@ -16,6 +16,16 @@ from flask import Flask, jsonify, request, send_from_directory
 from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 from eeg_music.audio.MusicDataRecorder import MusicDataRecorder
+from eeg_music.audio.MusicPlayer import MusicPlayer
+
+# 尝试导入DeepseekReader，如果失败则设为None
+try:
+    from eeg_music.reader.DeepseekReader import DeepseekReader
+    DEEPSEEK_AVAILABLE = True
+except ImportError as e:
+    print(f"警告: DeepseekReader导入失败: {e}")
+    DeepseekReader = None
+    DEEPSEEK_AVAILABLE = False
 
 # Flask服务器运行函数（在单独线程中运行）
 def run_flaskserver_thread(arduino_reader, mindwave_reader=None):
@@ -62,6 +72,23 @@ class FlaskServer:
         # 录制状态管理
         self.recording_state = 'stopped'  # 'stopped', 'recording', 'paused'
         self.recording_action = None
+        
+        # 添加音乐播放器和回放状态管理
+        self.music_player = MusicPlayer(max_sounds=50)
+        self.playback_active = False
+        self.playback_thread = None
+        
+        # 初始化DeepseekReader
+        if DEEPSEEK_AVAILABLE:
+            try:
+                self.deepseek_reader = DeepseekReader(session_name="ai_generated")
+                self.deepseek_reader.connect()
+                print("DeepseekReader初始化成功")
+            except Exception as e:
+                print(f"DeepseekReader初始化失败: {e}")
+                self.deepseek_reader = None
+        else:
+            self.deepseek_reader = None
         
         # 设置路由
         self.setup_routes()
@@ -273,20 +300,20 @@ class FlaskServer:
                             'message': '录制文件名不能为空'
                         })
                 
-                # 处理历史记录文件选择消息
+                # 处理心音轨迹文件选择消息
                 elif data.get('type') == 'file_selected':
                     filename = data.get('data', '').strip()
                     
                     if filename:
                         print(f"用户选择了历史文件: '{filename}' 来自 {request.sid}")
                         
-                        # 这里可以添加文件选择的处理逻辑
-                        # 比如：记录用户行为、预加载文件内容等
+                        # 启动文件回放
+                        self.start_file_playback(filename)
                         
                         # 发送确认消息
                         emit('file_selection_confirmation', {
                             'type': 'file_selection_confirmation',
-                            'message': f'已选择文件 "{filename}"',
+                            'message': f'已选择文件 "{filename}"，开始回放',
                             'success': True,
                             'selected_file': filename,
                             'timestamp': time.time()
@@ -369,6 +396,28 @@ class FlaskServer:
                         emit('error', {
                             'type': 'error',
                             'message': f'无效的录制状态: {new_state}'
+                        })
+                
+                # 处理AI音乐生成提示消息
+                elif data.get('type') == 'ai_music_prompt':
+                    prompt = data.get('data', '').strip()
+                    
+                    if prompt:
+                        print(f"收到AI音乐生成提示: '{prompt}' 来自 {request.sid}")
+                        
+                        # 在单独线程中处理AI生成，避免阻塞
+                        ai_thread = threading.Thread(
+                            target=self._handle_ai_music_generation,
+                            args=(prompt, request.sid),
+                            daemon=True
+                        )
+                        ai_thread.start()
+                        
+                    else:
+                        # 提示为空
+                        emit('ai_generation_error', {
+                            'type': 'ai_generation_error',
+                            'message': 'AI音乐生成提示不能为空'
                         })
                 
             except Exception as e:
@@ -483,6 +532,200 @@ class FlaskServer:
         
         # 启动服务器
         self.socketio.run(self.app, host=server_address, port=http_port, debug=False)
+
+    def start_file_playback(self, filename):
+        """启动历史文件回放"""
+        if self.playback_active:
+            print("回放已在进行中，停止当前回放")
+            self.stop_file_playback()
+        
+        data_dir = os.path.join(os.getcwd(), 'data', 'music_notes')
+        file_path = os.path.join(data_dir, filename)
+        
+        if not os.path.exists(file_path):
+            print(f"文件不存在: {file_path}")
+            return
+        
+        self.playback_active = True
+        
+        # 创建回放线程
+        self.playback_thread = threading.Thread(
+            target=self._playback_worker,
+            args=(file_path,),
+            daemon=True
+        )
+        self.playback_thread.start()
+        print(f"开始回放文件: {filename}")
+    
+    def stop_file_playback(self):
+        """停止当前回放"""
+        self.playback_active = False
+        if self.playback_thread and self.playback_thread.is_alive():
+            print("等待回放线程结束...")
+            # 线程会在检查到playback_active=False时自动退出
+    
+    def _playback_worker(self, file_path):
+        """回放工作线程"""
+        def visualization_callback(data):
+            """可视化数据回调函数"""
+            if not self.playback_active:
+                return
+            
+            # 向所有连接的客户端发送可视化数据
+            if self.connected_clients:
+                self.socketio.emit('message', data)
+        
+        try:
+            # 使用修改后的play_csv_file方法，传入回调函数
+            self.music_player.play_csv_file(file_path, data_callback=visualization_callback)
+        except Exception as e:
+            print(f"回放过程中出错: {e}")
+        finally:
+            self.playback_active = False
+            print("回放结束")
+            
+            # 通知前端回放结束
+            if self.connected_clients:
+                self.socketio.emit('playback_finished', {
+                    'type': 'playback_finished',
+                    'message': '回放已完成',
+                    'timestamp': time.time()
+                })
+
+    def _handle_ai_music_generation(self, prompt, client_sid):
+        """处理AI音乐生成"""
+        try:
+            print(f"开始处理AI音乐生成: {prompt}")
+            
+            # 检查DeepseekReader是否可用
+            if not self.deepseek_reader:
+                self.socketio.emit('ai_generation_error', {
+                    'type': 'ai_generation_error',
+                    'message': 'AI音乐生成服务不可用，请检查DeepSeek API配置'
+                }, room=client_sid)
+                return
+            
+            # 使用DeepseekReader生成音乐
+            music_data = self.deepseek_reader.generate_music_from_prompt(prompt)
+            
+            if not music_data:
+                self.socketio.emit('ai_generation_error', {
+                    'type': 'ai_generation_error',
+                    'message': 'AI未能生成音乐数据，请尝试修改提示词'
+                }, room=client_sid)
+                return
+            
+            print(f"AI生成了 {len(music_data)} 个音符")
+            
+            # 保存生成的音乐到文件
+            filename = self.deepseek_reader.save_to_csv()
+            
+            # 播放生成的音乐
+            self._play_ai_generated_music(music_data)
+            
+            # 发送可视化数据到前端
+            self._send_ai_music_visualization_data(music_data)
+            
+            # 发送成功响应
+            self.socketio.emit('ai_music_confirmation', {
+                'type': 'ai_music_confirmation',
+                'success': True,
+                'message': 'AI音乐生成成功',
+                'notes_count': len(music_data),
+                'music_data': music_data,
+                'filename': filename,
+                'prompt': prompt,
+                'timestamp': time.time()
+            }, room=client_sid)
+            
+            print(f"AI音乐生成成功，文件保存为: {filename}")
+            
+        except Exception as e:
+            print(f"AI音乐生成处理时出错: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            self.socketio.emit('ai_generation_error', {
+                'type': 'ai_generation_error',
+                'message': f'AI音乐生成处理时出错: {str(e)}'
+            }, room=client_sid)
+    
+    def _play_ai_generated_music(self, music_data):
+        """播放AI生成的音乐"""
+        try:
+            # 在单独线程中播放音乐，避免阻塞
+            def play_music():
+                for i, note_data in enumerate(music_data):
+                    try:
+                        freq = note_data['freq']
+                        duration = note_data['duration']
+                        instrument = note_data['instrument']
+                        intensity = note_data['intensity']
+                        
+                        # 播放音符
+                        self.music_player.play_wav_note(
+                            freq=freq,
+                            duration=duration,
+                            instrument=instrument,
+                            intensity=intensity,
+                            wait=False
+                        )
+                        
+                        # 控制播放间隔
+                        if i < len(music_data) - 1:
+                            time.sleep(0.1)  # 间隔100ms
+                            
+                    except Exception as e:
+                        print(f"播放音符时出错: {e}")
+                        continue
+            
+            # 启动播放线程
+            play_thread = threading.Thread(target=play_music, daemon=True)
+            play_thread.start()
+            
+        except Exception as e:
+            print(f"播放AI生成音乐时出错: {e}")
+    
+    def _send_ai_music_visualization_data(self, music_data):
+        """发送AI音乐的可视化数据到前端"""
+        try:
+            def send_visualization():
+                for i, note_data in enumerate(music_data):
+                    try:
+                        # 构造与Arduino数据兼容的可视化数据包
+                        visualization_data = {
+                            'freq': note_data['freq'],
+                            'scale': 'AI Generated',
+                            'note': hash(note_data['note_name']) % 8,  # 简单的音符索引映射
+                            'distance': 25.0,  # 固定距离值
+                            'potentiometer': note_data['intensity'] * 5.0,  # 强度映射到电位器
+                            'rotary_potentiometer': str(note_data['intensity'] * 5.0),
+                            'button_state': 0,
+                            'timestamp': time.time(),
+                            # 标记这是AI生成的数据
+                            'ai_generated': True,
+                            'note_name': note_data['note_name'],
+                            'instrument': note_data['instrument']
+                        }
+                        
+                        # 发送到所有连接的客户端
+                        if self.connected_clients:
+                            self.socketio.emit('message', visualization_data)
+                        
+                        # 控制发送间隔
+                        if i < len(music_data) - 1:
+                            time.sleep(0.1)  # 间隔100ms
+                            
+                    except Exception as e:
+                        print(f"发送可视化数据时出错: {e}")
+                        continue
+            
+            # 启动可视化数据发送线程
+            viz_thread = threading.Thread(target=send_visualization, daemon=True)
+            viz_thread.start()
+            
+        except Exception as e:
+            print(f"发送AI音乐可视化数据时出错: {e}")
 
 def main():
     """主函数 - 用于测试"""

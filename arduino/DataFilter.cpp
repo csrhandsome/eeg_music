@@ -43,7 +43,7 @@ namespace DataFilter
 
     // 平滑距离数据，使用移动平均滤波
     float smoothDistance(float distance) {
-        // 添加新的距离值到历史记录
+        // 添加新的距离值到心音轨迹
         distanceHistory[historyIndex] = distance;
         historyIndex = (historyIndex + 1) % 5;
         if (historyIndex == 0) historyFull = true;

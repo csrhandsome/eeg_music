@@ -19,8 +19,10 @@
     <script src="scripts/background_enhancer.js"></script>
     <!-- 引入录制页面导航样式 -->
     <link rel="stylesheet" href="styles/record_navigation.css">
-    <!-- 引入历史记录页面样式 -->
+    <!-- 引入心音轨迹页面样式 -->
     <link rel="stylesheet" href="styles/history.css">
+    <!-- 引入音符SVG资源 -->
+    <script src="assets/notes.js"></script>
 </head>
 
 <body>
@@ -28,11 +30,11 @@
     <div id="p5-canvas-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1;"></div>
     
     <!-- 左上角控制按钮 -->
-    <button  onclick="goToPlay()" title="返回播放页面" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
+    <button  onclick="goToWelcomepage()" title="返回播放页面" style="position: fixed; top: 20px; left: 20px; z-index: 1000; background: transparent; border: none; padding: 0;">
         <img src="assets/back.svg" alt="返回" />
     </button>
 
-    <!-- 历史记录文件列表容器 -->
+    <!-- 心音轨迹文件列表容器 -->
     <div class="history-container">
         <div class="file-list-container" id="file-list">
         </div>
@@ -44,21 +46,23 @@
             <div class="stacked-button-bottom control-bar"></div>
             <div class="stacked-button-top control-bar">
                 <div class="button-group-content">
-                    <div class="action-button primary" onclick="toggleMobileStatus()" role="button" tabindex="0">
+                    <div class="action-button primary" onclick="goToPlay()" role="button" tabindex="0">
                         <img src="assets/music.svg" alt="音乐" style="width: 16px; height: 16px;" />
-                        <span>开始播放</span>
+                        <span>心音演奏</span>
                     </div>
                     <div class="action-button secondary" onclick="goToHistory()" role="button" tabindex="0">
-                        <img src="assets/history.svg" alt="历史记录" style="width: 16px; height: 16px;" />
-                        <span>历史记录</span>
+                        <img src="assets/history.svg" alt="心音轨迹" style="width: 16px; height: 16px;" />
+                        <span>心音轨迹</span>
                     </div>
                 </div>
             </div>
         </div> 
     </div> 
     
+    <!-- 引入音游P5.js可视化逻辑 -->
+    <script src="scripts/music_game_p5.js"></script>
     <script src="scripts/music_game_p5_script.js"></script>
-    <!-- 引入历史记录页面脚本 -->
+    <!-- 引入心音轨迹页面脚本 -->
     <script src="scripts/history.js"></script>
 </body>
 </html>
