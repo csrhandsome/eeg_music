@@ -34,8 +34,8 @@ class MusicPlayer:
             self.instrument_scales = {}
             self.traditional_scale = {}
     
-    def play_note(self, freq, duration=0.5, instrument="piano", intensity=0.8, wait=True):
-        """播放单个音符
+    def play_generated_note(self, freq, duration=0.5, instrument="piano", intensity=0.8, wait=True):
+        """播放单个电子合成器音符
         
         参数:
             freq: 频率 (Hz)
@@ -127,7 +127,7 @@ class MusicPlayer:
                     sound = pygame.sndarray.make_sound(resampled_array)
                     actual_duration = duration
                     
-                    print(f"变速播放: 原长度 {original_length:.2f}秒 -> 目标长度 {duration:.2f}秒 (速度倍数: {speed_factor:.2f})")
+                    # print(f"变速播放: 原长度 {original_length:.2f}秒 -> 目标长度 {duration:.2f}秒 (速度倍数: {speed_factor:.2f})")
                     
                 except Exception as e:
                     print(f"变速处理失败，使用截断模式: {e}")
@@ -137,7 +137,7 @@ class MusicPlayer:
                 # 模式2: 截断播放 - 完整播放但在duration时间点停止
                 maxtime_ms = min(int(duration * 1000), int(original_length * 1000))
                 actual_duration = min(duration, original_length)
-                print(f"截断播放: 原长度 {original_length:.2f}秒, 播放 {actual_duration:.2f}秒")
+                # print(f"截断播放: 原长度 {original_length:.2f}秒, 播放 {actual_duration:.2f}秒")
             else:
                 # speedup模式成功，使用完整的duration
                 maxtime_ms = int(duration * 1000)
@@ -163,7 +163,7 @@ class MusicPlayer:
             if len(self.sound_objects) > self.MAX_SOUNDS:
                 self.sound_objects = self.sound_objects[-self.MAX_SOUNDS:]
                 
-            print(f"播放WAV音符: {wav_file_path}, 强度: {intensity:.2f}, 实际持续时间: {actual_duration:.2f}秒")
+            # print(f"播放WAV音符: {wav_file_path}, 强度: {intensity:.2f}, 实际持续时间: {actual_duration:.2f}秒")
             
         except FileNotFoundError:
             print(f"错误: 找不到文件 {wav_file_path}")
@@ -174,14 +174,14 @@ class MusicPlayer:
     
     def play_csv_file(self, csv_file_path, data_callback=None):
         """
-        播放CSV文件中的音符，支持可视化数据回调
+        播放CSV文件中的音符,支持可视化数据回调
         
         参数:
             csv_file_path: CSV文件路径
             data_callback: 可选的回调函数，用于发送可视化数据
                           回调函数签名: callback(data_dict)
         
-        CSV格式应包含以下列：
+        CSV格式应包含以下列:
         timestamp, freq, duration, instrument, intensity, note_name, session_name, 
         distance, scale, note, potentiometer, rotary_potentiometer, button_state
         """
@@ -245,37 +245,26 @@ class MusicPlayer:
             print(f"播放CSV文件时出错: {e}")
         
         print("CSV文件播放完毕")
-            
-    def play_little_star(self, instrument="piano"):
-        """播放小星星旋律"""
-        if self.scales_available:
-            # 使用音符名称版本
-            melody = [
-                ('C4', 0.5), ('C4', 0.5), ('G4', 0.5), ('G4', 0.5),
-                ('A4', 0.5), ('A4', 0.5), ('G4', 1.0),
-                ('F4', 0.5), ('F4', 0.5), ('E4', 0.5), ('E4', 0.5),
-                ('D4', 0.5), ('D4', 0.5), ('C4', 1.0)
-            ]
-            print(f"播放小星星 (使用{instrument}音色)")
-            self.play_sequence_by_name(melody, instrument)
+    
+    def play_note(self, freq, duration=0.5, instrument="piano", intensity=0.8, wait=True, playback_mode="truncate"):
+        """尝试播放音符,优先使用WAV文件,如果文件不存在则使用生成的音符
+        
+        参数:
+            freq: 频率 (Hz) 或频率标识符
+            duration: 持续时间 (秒)
+            instrument: 乐器类型
+            intensity: 音量强度 (0-1)
+            wait: 是否等待音符播放完毕
+            playback_mode: WAV播放模式 ("truncate" 或 "speedup")
+        """
+        # 直接检查文件是否存在，避免嵌套异常处理
+        wav_file_path = f"data/instruments/{instrument}/{freq}.wav"
+        
+        if os.path.exists(wav_file_path):
+            self.play_wav_note(freq, duration, instrument, intensity, wait, playback_mode)
+            return
         else:
-            # 小星星旋律对应的频率 (C C G G A A G, F F E E D D C)
-            # 中央C（C4）的频率是261.63Hz
-            C4 = 261.63
-            D4 = 293.66
-            E4 = 329.63
-            F4 = 349.23
-            G4 = 392.00
-            A4 = 440.00
+            # 文件不存在，直接使用生成音符
+            self.play_generated_note(freq, duration, instrument, intensity, wait)
             
-            # 小星星旋律
-            melody = [
-                (C4, 0.5), (C4, 0.5), (G4, 0.5), (G4, 0.5),
-                (A4, 0.5), (A4, 0.5), (G4, 1.0),
-                (F4, 0.5), (F4, 0.5), (E4, 0.5), (E4, 0.5),
-                (D4, 0.5), (D4, 0.5), (C4, 1.0)
-            ]
-            
-            print(f"播放小星星 (使用{instrument}音色)")
-            self.play_sequence(melody, instrument)
 

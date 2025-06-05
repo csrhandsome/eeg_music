@@ -73,8 +73,8 @@ class MusicDataRecorder:
         """
         if not self.note_data_buffer:
             return
-        
-        filename = f"{self.session_name}"
+        time = datetime.now().strftime("%m-%d_%H-%M")
+        filename = f"deepseek_{time}_{self.session_name}"
         
         if self.save_format == "csv":
             self._save_to_csv(filename)

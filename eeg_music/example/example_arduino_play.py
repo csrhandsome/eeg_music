@@ -123,22 +123,24 @@ def arduino_play_by_rate():
                                 else:
                                     # 或者使用距离映射到频率
                                     freq = map_to_frequency(distance, 0, 100)
-                                
+                                    
                                 # 安全处理电压值
                                 voltage = min(max(arduino_data['potentiometer'], 0), 5)
-                                
+                                voltage = voltage - 2.5
                                 # 根据传感器数据动态调整音符持续时间
-                                base_duration = 1.5 + (voltage / 5) * 0.5  # 1.5-2秒
+                                addition_duration = 1.5 + (voltage / 5) * 0.5  # 0.75-1.75秒
                                 
                                 # 为不同乐器调整持续时间策略
                                 if args.instrument == 'piano':
                                     # 钢琴音符可以短一些
-                                    duration = min(base_duration, 0.8)
-                                elif args.instrument in ['flute', 'violin']:
+                                    duration = 1.0+addition_duration
+                                elif args.instrument == 'violin':
                                     # 管弦乐器需要更长的持续时间
-                                    duration = min(base_duration * 1.5, 1.5)
-                                else:
-                                    duration = min(base_duration, 1.0)
+                                    duration = 1.7+addition_duration
+                                elif args.instrument == 'trumpet':
+                                    duration = 1.5+addition_duration
+                                elif args.instrument == 'guzheng':
+                                    duration = 1.5+addition_duration
                                 # duration=1.5
                                 # 播放音符 - 使用类方法而不是全局函数
                                 

@@ -1,14 +1,14 @@
 # EEG音乐生成系统
 
-基于脑电波(EEG)和Arduino传感器数据的实时音乐生成系统。该项目结合了神经科学、音乐理论和嵌入式系统，能够根据用户的脑电活动和物理交互实时生成音乐。
+基于脑电波(EEG)和Arduino传感器的实时音乐生成系统。
 
-## 🎵 项目特色
+## 🎵 功能特色
 
 - **多模态输入**: 支持脑电波(Mindwave)和Arduino传感器数据
-- **实时音乐生成**: 根据传感器数据实时生成不同乐器音色
-- **Web可视化**: 提供实时数据可视化界面
-- **多种乐器**: 支持钢琴、小提琴、长笛、吉他、小号等音色
-- **数据记录**: 支持音乐数据和脑电数据的记录与分析
+- **实时音乐生成**: 根据传感器数据实时生成钢琴、小提琴、小号、古筝音色
+- **Web可视化**: 提供实时数据可视化和音乐回放功能
+- **情绪识别**: 基于脑电数据的KNN情绪分类
+- **AI音乐生成**: DeepSeek API集成的智能音乐创作
 
 ## 🎬 演示视频
 
@@ -42,8 +42,8 @@ EEG音乐系统
 ## 📋 系统要求
 
 ### 硬件要求
-- **脑电设备**: Mindwave Mobile/Mobile 2
-- **Arduino开发板**: Arduino Uno/Nano
+- **脑电设备**: Mindwave Mobile (/dev/ttyACM0)
+- **Arduino开发板**: Uno/Nano (/dev/ttyUSB0)
 - **传感器模块**:
   - HC-SR04超声波传感器
   - 滑动电位器
@@ -56,13 +56,7 @@ EEG音乐系统
 - **Python**: 3.9+
 - **Anaconda**: 用于环境管理
 
-## 🚀 安装指南
-
-### 环境要求
-- **Python**: 3.9+ (推荐3.9.21)
-- **操作系统**: Linux (推荐), Windows, macOS
-- **内存**: 至少4GB RAM
-- **存储**: 至少2GB可用空间
+## 🚀 安装
 
 ### 1. 克隆项目
 ```bash
@@ -70,225 +64,67 @@ git clone <repository-url>
 cd eeg_music
 ```
 
-### 2. 创建Python虚拟环境
-
-#### 方法1：使用Conda (推荐)
+### 2. 创建环境
 ```bash
-# 创建conda环境
 conda create -n eeg_music python=3.9.21
 conda activate eeg_music
 ```
 
-#### 方法2：使用虚拟环境
+### 3. 安装依赖
 ```bash
-# 创建虚拟环境
-python3 -m venv eeg_music_env
-source eeg_music_env/bin/activate  # Linux/macOS
-# 或 Windows: eeg_music_env\Scripts\activate
-```
-
-### 3. 安装依赖包
-
-#### 方法1：使用requirements.txt (推荐)
-```bash
-# 安装所有依赖
 pip install -r requirements.txt
 ```
 
-#### 方法2：手动安装核心依赖
+### 4. 设备权限 (Linux)
 ```bash
-# 基础音频和串口库
-pip install pygame>=2.1.0 pyserial>=3.5 numpy>=1.21.0
-
-# Web服务器组件
-pip install Flask==2.3.3 Flask-SocketIO==5.3.6 Flask-CORS==4.0.0
-pip install python-socketio==5.8.0 eventlet==0.33.3
-
-# 异步HTTP和WebSocket
-pip install aiohttp>=3.8.0 websockets>=10.0
-
-# 机器学习和脑电处理 (可选)
-pip install torch>=1.13.0 torcheeg>=1.0.11 moabb>=0.4.6
-pip install scikit-learn>=1.1.0 matplotlib>=3.5.0
-
-# 其他工具
-pip install tqdm>=4.64.0
-```
-
-### 4. 验证安装
-```bash
-# 检查Python包
-python -c "import pygame, serial, flask, numpy; print('核心依赖安装成功!')"
-
-# 检查串口设备 (Linux)
-ls /dev/tty*
-
-# 测试音频系统
-python -c "import pygame; pygame.mixer.init(); print('音频系统正常!')"
-```
-
-### 5. 硬件连接与配置
-
-#### Arduino设置
-```bash
-# 连接Arduino到USB端口
-# 通常会显示为 /dev/ttyUSB0 (Linux) 或 COM3 (Windows)
-
-# 检查Arduino连接
-python -m eeg_music.reader.ArduinoSerialReader -l
-
-# 设置设备权限 (Linux)
-sudo chmod 666 /dev/ttyUSB0
-sudo usermod -a -G dialout $USER  # 添加用户到dialout组
-```
-
-#### Mindwave脑电设备设置
-```bash
-# 连接Mindwave设备
-# 通常会显示为 /dev/ttyACM0 (Linux) 或 COM4 (Windows)
-
-# 设置设备权限 (Linux)
-sudo chmod 666 /dev/ttyACM0
-
-# 测试脑电设备连接
-python -m eeg_music.example.example_record --test-connection
-```
-
-#### 设备权限配置 (Linux)
-```bash
-# 方法1：临时权限 (重启后失效)
-sudo chmod 666 /dev/ttyUSB0
-sudo chmod 666 /dev/ttyACM0
-
-# 方法2：永久权限 (推荐)
+sudo chmod 666 /dev/ttyUSB0 /dev/ttyACM0
 sudo usermod -a -G dialout $USER
-sudo usermod -a -G tty $USER
-# 注销并重新登录使组权限生效
-
-# 方法3：创建udev规则
-echo 'SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", MODE="0666"' | sudo tee /etc/udev/rules.d/99-arduino.rules
-sudo udevadm control --reload-rules
 ```
 
 ## ⚡ 快速开始
 
-### 🎵 最简单的开始方式
-
-1. **激活环境并启动Arduino音乐播放**：
+### 1. 启动音乐演奏
 ```bash
-# 激活conda环境
 conda activate eeg_music
+bash scripts/play.sh
+```
 
-# 启动Arduino音乐播放（钢琴音色）
+### 2. 打开Web界面
+```bash
+# 新终端
+python3 -m http.server 5500
+# 浏览器访问: http://localhost:5500/visualization/welcomepage.html
+```
+
+## 🎮 主要功能
+
+### Arduino音乐播放
+```bash
 python -m eeg_music.example.example_arduino_play -i piano
 ```
 
-2. **打开Web可视化**：
+### 组合模式(脑电+Arduino)
 ```bash
-# 在新终端中启动Web服务器
-python3 -m http.server 5500
-
-# 浏览器访问: http://localhost:5500/visualization/arduino_visualization.html
+python -m eeg_music.example.example_combine_play
 ```
 
-3. **开始演奏**：
-   - 在Arduino传感器前挥手控制距离
-   - 调节电位器改变音符参数
-   - 观察Web界面的实时数据显示
-
-### 🔧 常用命令
-
+### 脑电数据记录
 ```bash
-# 1. 检查设备连接
-python -m eeg_music.reader.ArduinoSerialReader -l
-
-# 2. 测试音频系统
-python -c "import pygame; pygame.mixer.init(); print('音频系统正常!')"
-
-# 3. 启动完整的可视化系统
-bash scripts/start_eeg_music.sh
+python -m eeg_music.example.example_record -p /dev/ttyACM0 -n "用户名" -d 300
 ```
 
-## 🎮 详细使用方法
-
-### 快速启动指南
-运行启动脚本查看所有可用命令：
+### AI音乐生成
 ```bash
-bash scripts/start_eeg_music.sh
+python -m eeg_music.reader.DeepseekReader --prompt "创作一首快乐的小曲子"
 ```
 
-### 1. Arduino音乐播放
-基于Arduino传感器数据生成音乐：
-```bash
-# 激活环境
-source $HOME/anaconda3/etc/profile.d/conda.sh
-conda activate eeg_music
+## 🎼 传感器映射
 
-# 启动Arduino音乐播放
-python -m eeg_music.example.example_arduino_play -i piano
-
-# 可选参数
-python -m eeg_music.example.example_arduino_play \
-  --arduino_port /dev/ttyUSB0 \
-  --instrument violin \
-  --rate 0.35 \
-  --duration 60
-```
-
-### 2. Web可视化服务器
-启动Web服务器查看实时数据：
-```bash
-python3 -m http.server 5500
-```
-访问: `http://localhost:5500/visualization/arduino_visualization.html`
-
-### 3. 组合模式播放
-同时使用Arduino和脑电数据：
-```bash
-python -m eeg_music.example.example_combined_play \
-  --arduino-port /dev/ttyUSB0 \
-  --mindwave-port /dev/ttyACM0 \
-  -i violin
-```
-
-### 4. 脑电数据记录
-记录脑电数据用于后续分析：
-```bash
-python -m eeg_music.example.example_record \
-  -p /dev/ttyACM0 \
-  -n "张三" \
-  -m "放松" \
-  -d 300
-```
-
-### 5. 设备检查
-检查可用的串口设备：
-```bash
-python -m eeg_music.reader.ArduinoSerialReader -l
-```
-
-## 🎼 音乐生成原理
-
-### 传感器到音乐的映射
-- **距离传感器** → 音符选择 (音高)
-- **滑动电位器** → 音符持续时间
-- **旋转电位器** → 音阶选择 (C大调、G大调等)
-- **脑电注意力** → 音符频率微调
-- **脑电冥想度** → 音量控制
-
-### 支持的音阶
-- C大调 (C Major)
-- G大调 (G Major)  
-- D大调 (D Major)
-- E小调 (E Minor)
-- A小调 (A Minor)
-
-### 支持的乐器音色
-- 钢琴 (Piano)
-- 小提琴 (Violin)
-- 长笛 (Flute)
-- 吉他 (Guitar)
-- 小号 (Trumpet)
+- **距离传感器** → 音符选择
+- **滑动电位器** → 音符持续时间  
+- **旋转电位器** → 音阶选择
+- **脑电注意力** → 音符强度
+- **脑电情绪** → 乐器选择 (0=钢琴 1=小提琴 2=小号 3=古筝)
 
 ## 📊 数据格式
 
@@ -480,28 +316,12 @@ ssh three@192.168.5.11  # 树莓派5
 
 ```
 eeg_music/
-├── arduino/                 # Arduino代码
-│   ├── arduino.ino         # 主程序
-│   └── old/                # 历史版本
-├── data/                   # 数据文件
-│   ├── eeg/               # 脑电数据
-│   ├── img/               # 图片资源
-│   │   └── demo_play.mp4  # 演示视频
-│   ├── instrument/        # 乐器音色文件
-│   └── music_notes/       # 音符记录
-├── eeg_music/             # 主要Python包
-│   ├── audio/             # 音频处理
-│   ├── example/           # 示例程序
-│   ├── reader/            # 数据读取
-│   ├── server/            # Web服务器
-│   └── util/              # 工具函数
-├── scripts/               # 启动脚本
-│   ├── start_eeg_music.sh # 主启动脚本
-│   ├── simple_play.sh     # 简单播放
-│   ├── python_server.sh   # Web服务器
-│   └── environment.sh     # 环境配置
-├── visualization/         # Web可视化
-└── README.md             # 项目文档
+├── arduino/           # Arduino代码
+├── data/             # 数据和音色文件
+├── eeg_music/        # Python包
+├── scripts/          # 启动脚本
+├── visualization/    # Web界面
+└── requirements.txt  # 依赖包
 ```
 
 ## 🤝 贡献指南

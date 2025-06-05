@@ -10,7 +10,7 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
     参数:
         freq: 频率 (Hz)
         duration: 持续时间 (秒)
-        instrument: 乐器类型 ('piano', 'flute', 'violin', 'guitar', 'trumpet')
+        instrument: 乐器类型 ('piano', 'flute', 'violin', 'guitar', 'trumpet', 'guzheng')
         intensity: 强度参数 (0-1)，影响音色特性
         
     返回:
@@ -134,6 +134,57 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
         release_time = 0.08
         envelope = adsr_envelope(t, attack_time, decay_time, sustain_level, release_time, duration, 'sine')
         
+    elif instrument == "guzheng":
+        # 古筝音色：金属弦音质，丰富的泛音，特有的拨弦起音和长衰减
+        # 添加丰富的泛音谱，特别强调奇次谐波（古筝特色）
+        wave += 0.6 * np.sin(2 * np.pi * 2 * freq * t)   # 二次泛音
+        wave += 0.4 * np.sin(2 * np.pi * 3 * freq * t)   # 三次泛音（较强）
+        wave += 0.25 * np.sin(2 * np.pi * 4 * freq * t)  # 四次泛音
+        wave += 0.3 * np.sin(2 * np.pi * 5 * freq * t)   # 五次泛音（奇次，较强）
+        wave += 0.15 * np.sin(2 * np.pi * 6 * freq * t)  # 六次泛音
+        wave += 0.2 * np.sin(2 * np.pi * 7 * freq * t)   # 七次泛音（奇次）
+        wave += 0.1 * np.sin(2 * np.pi * 8 * freq * t)   # 八次泛音
+        wave += 0.08 * np.sin(2 * np.pi * 9 * freq * t)  # 九次泛音
+        
+        # 添加金属弦的特有高频成分（金属质感）
+        metallic_freq1 = freq * 11.7  # 非整数倍泛音，产生金属感
+        metallic_freq2 = freq * 13.2
+        wave += 0.03 * np.sin(2 * np.pi * metallic_freq1 * t) * np.exp(-8.0 * t)
+        wave += 0.02 * np.sin(2 * np.pi * metallic_freq2 * t) * np.exp(-10.0 * t)
+        
+        # 拨弦瞬态特性（比吉他更尖锐）
+        pluck_transient = 0.25 * np.exp(-40 * t) * (
+            np.sin(2 * np.pi * freq * 1.8 * t) +  # 轻微的音高偏移
+            0.5 * np.random.normal(0, 1, len(t))   # 拨弦噪声
+        )
+        wave += pluck_transient
+        
+        # 古筝特有的弦振动调制（弦的松紧变化）
+        string_modulation = 0.02 * np.sin(2 * np.pi * 0.8 * t) * np.exp(-2.0 * t)
+        modulated_wave = np.sin(2 * np.pi * freq * (t + string_modulation))
+        wave = 0.85 * wave + 0.15 * modulated_wave
+        
+        # 古筝包络：快速起音，缓慢衰减，有轻微的维持
+        attack_time = 0.008 * (2-intensity)  # 非常快的起音（拨弦瞬间）
+        decay_time = 0.3 + 0.2 * intensity   # 较长的衰减时间
+        sustain_level = 0.15 + 0.1 * intensity  # 低持续音量
+        release_time = 0.8 + 0.4 * intensity    # 很长的释放时间
+        envelope = adsr_envelope(t, attack_time, decay_time, sustain_level, release_time, duration, 'exponential')
+        
+        # 添加古筝特有的余音效果（高频快速衰减，低频慢衰减）
+        frequency_dependent_decay = np.exp(-1.5 * t/duration)  # 整体衰减
+        high_freq_decay = np.exp(-6.0 * t/duration)            # 高频快速衰减
+        
+        # 对不同频率成分应用不同的衰减
+        base_wave = wave * 0.7  # 基础成分
+        high_freq_components = 0.3 * (
+            0.15 * np.sin(2 * np.pi * 6 * freq * t) +
+            0.1 * np.sin(2 * np.pi * 7 * freq * t) +
+            0.08 * np.sin(2 * np.pi * 8 * freq * t)
+        ) * high_freq_decay
+        
+        wave = base_wave + high_freq_components
+        
     else:
         # 默认简单包络
         envelope = np.ones_like(t)
@@ -148,24 +199,5 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
     wave = wave / (np.max(np.abs(wave)) + 1e-6)  # 添加小值避免除零
     return np.int16(wave * 32767)
 
-def play_note(freq, duration=0.5, instrument="piano", intensity=0.8, wait=True):
-    """播放单个音符
-    
-    参数:
-        freq: 频率 (Hz)
-        duration: 持续时间 (秒)
-        instrument: 乐器类型
-        intensity: 强度参数 (0-1)
-        wait: 是否等待音符播放完毕
-    """
-    samples = generate_instrument_wave(freq=freq, duration=duration, instrument=instrument, intensity=intensity)
-    sound = pygame.sndarray.make_sound(samples)
-    sound.play()
-    if wait:
-        # 等待音符播放完毕
-        pygame.time.wait(int(duration * 1000))
 
-# 初始化Pygame音频
-if not pygame.mixer.get_init():
-    pygame.mixer.init(frequency=44100, size=-16, channels=1)
 

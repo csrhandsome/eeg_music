@@ -559,13 +559,7 @@ class MusicGameVisualizationP5 {
                     this.arduinoData.rotary_potentiometer = data.rotary_potentiometer;
                 }
                 if (data.button_state !== undefined) {
-                    const oldState = this.arduinoData.button_state;
                     this.arduinoData.button_state = data.button_state;
-                    
-                    // 通知HTML处理button_state变化
-                    if (typeof handleButtonStateChange === 'function') {
-                        handleButtonStateChange(data.button_state);
-                    }
                 }
                 if (data.timestamp !== undefined) {
                     this.arduinoData.timestamp = data.timestamp;

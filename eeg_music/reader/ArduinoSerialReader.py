@@ -110,7 +110,7 @@ class ArduinoSerialReader:
         """解析Arduino传来的数据行
         
         示例格式:
-        Distance: 34.79 cm, Scale: C Major, Note: 5, Base Frequency: 440.00 potentiometer 2.55 Rotary potentiometer: 3.25 Button State: 1
+        Distance: 34.79 cm, Scale: C Major, Note: 5, Base Frequency: 440.00 Hz, Pot1 Voltage: 2.55 V, Pot2 Voltage: 3.25 V, Toggle State: 1
         """
         try:
             # 检查是否是数据行（包含Distance关键字）
@@ -135,18 +135,18 @@ class ArduinoSerialReader:
                 if freq_match:
                     self.frequency = float(freq_match.group(1))
                     
-                # 提取电位器电压
-                potentiometer_match = re.search(r"potentiometer\s+([\d.]+)", line)
+                # 提取电位器电压（Arduino发送的是"Pot1 Voltage"）
+                potentiometer_match = re.search(r"Pot1 Voltage:\s+([\d.]+)", line)
                 if potentiometer_match:
                     self.potentiometer = float(potentiometer_match.group(1))
                     
-                # 提取旋转电位器电压
-                rotary_pot_match = re.search(r"Rotary potentiometer:\s+([\d.]+)", line)
+                # 提取旋转电位器电压（Arduino发送的是"Pot2 Voltage"）
+                rotary_pot_match = re.search(r"Pot2 Voltage:\s+([\d.]+)", line)
                 if rotary_pot_match:
                     self.rotary_potentiometer = rotary_pot_match.group(1)
                     
-                # 提取按钮状态
-                button_match = re.search(r"Button State:\s+(\d+)", line)
+                # 提取按钮状态（Arduino发送的是"Toggle State"）
+                button_match = re.search(r"Toggle State:\s+(\d+)", line)
                 if button_match:
                     self.button_state = int(button_match.group(1))
                 

@@ -20,6 +20,8 @@ torch>=1.13.0
 
 # 数据科学和分析
 scikit-learn>=1.1.0
+pandas>=1.5.0
+seaborn>=0.11.0
 
 # 其他工具
 tqdm>=4.64.0

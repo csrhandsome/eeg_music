@@ -26,8 +26,11 @@ class MindwaveSerialReader:
         self.neuro = None
         self.data_buffer = []
         self.name = name
-        mood_labels = {'happy':0,'sad':1,'angry':2,'peaceful':3}
-        self.mood = mood_labels[mood]
+        self.mood_labels = {'happy':0,'sad':1,'angry':2,'peaceful':3}
+        if mood == 'default':
+            self.mood = 3
+        else:
+            self.mood = self.mood_labels[mood]
 
     def connect(self):
         """建立串口连接"""
@@ -49,7 +52,7 @@ class MindwaveSerialReader:
             print("串口连接已关闭")
             
     def read_data(self, save_to_file=False, duration=None):
-        """读取脑波数据并可选择保存到文件
+        """读取脑波数据并可选择保存到文件 主要用作来保存数据,真正的获取数据是current_data
         
         参数:
         save_to_file (bool): 是否保存数据到文件
@@ -79,10 +82,11 @@ class MindwaveSerialReader:
                     'lowGamma': self.neuro.lowGamma,
                     'midGamma': self.neuro.midGamma,
                     'poorSignal': self.neuro.poorSignal,
-                    'blinkStrength': self.neuro.blinkStrength,
-                    'mood': self.mood
+                    'blinkStrength': self.neuro.blinkStrength
                 }
-                
+                if self.mood != 'default':
+                    brain_data['mood'] = self.mood
+                    
                 print(
                     f"rawValue: {brain_data['rawValue']}, "
                     f"专注度: {brain_data['attention']}, "
@@ -118,7 +122,7 @@ class MindwaveSerialReader:
     @property   
     def current_data(self):
         """获取当前的脑波数据"""
-        return {
+        data = {
             'attention': self.neuro.attention,
             'meditation': self.neuro.meditation,
             'rawValue': self.neuro.rawValue,
@@ -134,7 +138,11 @@ class MindwaveSerialReader:
             'blinkStrength': self.neuro.blinkStrength,
             'mood': self.mood
         }
-
+        return data
+        
+    def set_mood(self, mood):
+        self.mood = mood
+        
     def save_data_to_file(self,timestamp):
         """将数据保存到文件"""
         if not self.data_buffer:
