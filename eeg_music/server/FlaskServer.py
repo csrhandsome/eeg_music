@@ -605,8 +605,20 @@ class FlaskServer:
                 }, room=client_sid)
                 return
             
+            # 清理prompt作为session_name，去除特殊字符，截取前30个字符
+            import re
+            clean_prompt = re.sub(r'[^\w\s\u4e00-\u9fff]', '', prompt)  # 保留字母、数字、空格和中文
+            clean_prompt = clean_prompt.replace(' ', '_')  # 替换空格为下划线
+            session_name = clean_prompt[:30] if len(clean_prompt) > 30 else clean_prompt  # 限制长度
+            
+            print(f"使用prompt作为session_name: '{session_name}'")
+            
+            # 为这个特定的prompt创建新的DeepseekReader实例
+            from eeg_music.reader.DeepseekReader import DeepseekReader
+            current_reader = DeepseekReader(session_name=session_name)
+            
             # 使用DeepseekReader生成音乐
-            music_data = self.deepseek_reader.generate_music_from_prompt(prompt)
+            music_data = current_reader.generate_music_from_prompt(prompt)
             
             if not music_data:
                 self.socketio.emit('ai_generation_error', {
@@ -618,7 +630,7 @@ class FlaskServer:
             print(f"AI生成了 {len(music_data)} 个音符")
             
             # 保存生成的音乐到文件
-            filename = self.deepseek_reader.save_to_csv()
+            filename = current_reader.save_to_csv()
             
             # 播放生成的音乐
             self._play_ai_generated_music(music_data)

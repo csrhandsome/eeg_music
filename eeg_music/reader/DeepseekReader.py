@@ -62,7 +62,7 @@ class DeepseekReader:
         """
         try:
             response = self.client.chat.completions.create(
-                model="deepseek-reasoner",# "deepseek-reasoner"为R1模型
+                model="deepseek-chat",# "deepseek-reasoner"为R1模型 deepseek-chat为v3
                 messages=[
                     {"role": "system", "content": "You are a helpful assistant"},
                     {"role": "user", "content": "Hello, are you ready?"},
@@ -98,40 +98,41 @@ class DeepseekReader:
 4. 每个音符包含以下信息：
    - 音符名称 (C4, C#4, D4, D#4, E4, F4, F#4, G4, G#4, A4, A#4, B4, C5, C#5, D5, D#5, E5, F5, F#5, G5, G#5, A5, A#5, B5等)
    - 持续时间 (0.3-2.0秒之间的小数,钢琴在0.8左右,弦乐器在1.5左右,管乐器在1.0左右)
-   - 乐器 (piano, flute, violin, guitar, trumpet之一)
+   - 乐器 (piano, violin, guitar, guzheng之一)
    - 强度 (0.1-1.0之间的小数)
    - 时间戳 (从0.0开始，表示该音符开始播放的时间点，单位为秒)
 
 时间戳说明：
 - 时间戳决定了音符在音乐中的播放时间点，是音乐节奏的关键
 - 时间戳的间隔通常为0.3-0.6秒,根据情绪而定，悲伤的可能间隔更长，欢快的可能间隔更短
+- 时间戳从0开始
 
 输出格式要求：
 - 必须使用以下严格格式，每行一个音符
-- NOTE: [音符名称] [持续时间] [乐器] [强度] [时间戳]
+- NOTE: [时间戳] [音符名称] [持续时间] [乐器] [强度] 
 
 请生成一个完整的音乐片段示例(至少100个音符):
-NOTE: C4 0.8 piano 0.8 0.0
-NOTE: D4 0.6 piano 0.7 0.9
-NOTE: E4 0.8 piano 0.8 1.6
-NOTE: F4 1.0 violin 0.6 2.5
-NOTE: G4 0.7 violin 0.7 3.6
-NOTE: A4 0.9 violin 0.8 4.4
-NOTE: G4 0.5 piano 0.6 5.4
-NOTE: F4 0.8 piano 0.7 6.0
-NOTE: E4 1.2 flute 0.5 6.9
-NOTE: D4 0.6 flute 0.6 8.2
-NOTE: C4 1.0 piano 0.8 8.9
-NOTE: E4 0.7 guitar 0.7 10.0
-NOTE: G4 0.8 guitar 0.8 10.8
-NOTE: C5 1.1 violin 0.9 11.7
-NOTE: B4 0.6 violin 0.7 12.9
-NOTE: A4 0.8 piano 0.8 13.6
-NOTE: G4 0.9 piano 0.7 14.5
-NOTE: F4 0.7 flute 0.6 15.5
-NOTE: E4 0.8 flute 0.7 16.3
-NOTE: D4 1.0 piano 0.8 17.2
-NOTE: C4 1.5 piano 0.9 18.3
+NOTE: 0.0 C4 0.8 piano 0.8
+NOTE: 0.9 D4 0.6 piano 0.7
+NOTE: 1.6 E4 0.8 piano 0.8
+NOTE: 2.5 F4 1.0 violin 0.6
+NOTE: 3.6 G4 0.7 violin 0.7
+NOTE: 4.4 A4 0.9 violin 0.8
+NOTE: 5.4 G4 0.5 piano 0.6
+NOTE: 6.0 F4 0.8 piano 0.7
+NOTE: 6.9 E4 1.2 guzheng 0.5
+NOTE: 8.2 D4 0.6 guzheng 0.6
+NOTE: 8.9 C4 1.0 piano 0.8
+NOTE: 10.0 E4 0.7 guitar 0.7
+NOTE: 10.8 G4 0.8 guitar 0.8
+NOTE: 11.7 C5 1.1 violin 0.9
+NOTE: 12.9 B4 0.6 violin 0.7
+NOTE: 13.6 A4 0.8 piano 0.8
+NOTE: 14.5 G4 0.9 piano 0.7
+NOTE: 15.5 F4 0.7 guzheng 0.6
+NOTE: 16.3 E4 0.8 guzheng 0.7
+NOTE: 17.2 D4 1.0 piano 0.8
+NOTE: 18.3 C4 1.5 piano 0.9
 
 现在，根据用户的具体描述生成一个类似长度或更长的音符序列，确保音乐的连贯性和表现力。"""
 
@@ -171,8 +172,8 @@ NOTE: C4 1.5 piano 0.9 18.3
         music_data = []
         current_time = time.time() - self.session_start_time
         
-        # 使用正则表达式提取NOTE行
-        note_pattern = r'NOTE:\s*([A-G][#b]?\d+)\s+([\d.]+)\s+(\w+)\s+([\d.]+)\s+([\d.]+)'
+        # 使用正则表达式提取NOTE行 (新格式: NOTE: 时间戳 音符名称 持续时间 乐器 强度)
+        note_pattern = r'NOTE:\s*([\d.]+)\s+([A-G][#b]?\d+)\s+([\d.]+)\s+(\w+)\s+([\d.]+)'
         matches = re.findall(note_pattern, ai_response, re.IGNORECASE)
         
         if not matches:
@@ -181,7 +182,7 @@ NOTE: C4 1.5 piano 0.9 18.3
             music_data = self._intelligent_parse(ai_response, current_time)
         else:
             # 解析标准格式的音符
-            for i, (note_name, duration, instrument, intensity, timestamp) in enumerate(matches):
+            for i, (timestamp, note_name, duration, instrument, intensity) in enumerate(matches):
                 try:
                     # 验证并转换数据
                     duration = float(duration)
@@ -320,7 +321,8 @@ NOTE: C4 1.5 piano 0.9 18.3
             return
         
         if filename is None:
-            filename = f"ai_music_{self.session_name}.csv"
+            timestamp = datetime.now().strftime("%m%d_%H%M")
+            filename = f"deepseek_music_{self.session_name}_{timestamp}.csv"
         
         try:
             import os
