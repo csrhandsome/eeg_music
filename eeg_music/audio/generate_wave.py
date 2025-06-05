@@ -98,20 +98,21 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
         
     elif instrument == "guitar":
         # 吉他音色：丰富的谐波，快速起音，长衰减
-        wave += 0.5 * np.sin(2 * np.pi * 2 * freq * t)
-        wave += 0.4 * np.sin(2 * np.pi * 3 * freq * t)
-        wave += 0.2 * np.sin(2 * np.pi * 4 * freq * t)
-        wave += 0.05 * np.sin(2 * np.pi * 5 * freq * t)
+        # 让谐波强度受intensity影响
+        wave += 0.5 * intensity * np.sin(2 * np.pi * 2 * freq * t)
+        wave += 0.4 * intensity * np.sin(2 * np.pi * 3 * freq * t)
+        wave += 0.2 * intensity * np.sin(2 * np.pi * 4 * freq * t)
+        wave += 0.05 * intensity * np.sin(2 * np.pi * 5 * freq * t)
         
-        # 添加拨弦瞬态特性
-        pluck_noise = 0.15 * np.exp(-30 * t) * np.random.normal(0, 1, len(t))
+        # 添加拨弦瞬态特性，也受intensity影响
+        pluck_noise = 0.15 * intensity * np.exp(-30 * t) * np.random.normal(0, 1, len(t))
         wave += pluck_noise
         
         # 使用ADSR包络
-        attack_time = 0.01  # 快速起音
+        attack_time = 0.01 * (2-intensity)  # intensity影响起音速度
         decay_time = 0.1
         sustain_level = 0.3 * intensity
-        release_time = 0.5
+        release_time = 0.5 * (2-intensity)  # intensity影响释音时间
         envelope = adsr_envelope(t, attack_time, decay_time, sustain_level, release_time, duration, 'exponential')
         
     elif instrument == "trumpet":
@@ -144,24 +145,24 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
         
     elif instrument == "guzheng":
         # 古筝音色：金属弦音质，丰富的泛音，特有的拨弦起音和长衰减
-        # 添加丰富的泛音谱，特别强调奇次谐波（古筝特色）
-        wave += 0.6 * np.sin(2 * np.pi * 2 * freq * t)   # 二次泛音
-        wave += 0.4 * np.sin(2 * np.pi * 3 * freq * t)   # 三次泛音（较强）
-        wave += 0.25 * np.sin(2 * np.pi * 4 * freq * t)  # 四次泛音
-        wave += 0.3 * np.sin(2 * np.pi * 5 * freq * t)   # 五次泛音（奇次，较强）
-        wave += 0.15 * np.sin(2 * np.pi * 6 * freq * t)  # 六次泛音
-        wave += 0.2 * np.sin(2 * np.pi * 7 * freq * t)   # 七次泛音（奇次）
-        wave += 0.1 * np.sin(2 * np.pi * 8 * freq * t)   # 八次泛音
-        wave += 0.08 * np.sin(2 * np.pi * 9 * freq * t)  # 九次泛音
+        # 添加丰富的泛音谱，特别强调奇次谐波（古筝特色），受intensity影响
+        wave += 0.6 * intensity * np.sin(2 * np.pi * 2 * freq * t)   # 二次泛音
+        wave += 0.4 * intensity * np.sin(2 * np.pi * 3 * freq * t)   # 三次泛音（较强）
+        wave += 0.25 * intensity * np.sin(2 * np.pi * 4 * freq * t)  # 四次泛音
+        wave += 0.3 * intensity * np.sin(2 * np.pi * 5 * freq * t)   # 五次泛音（奇次，较强）
+        wave += 0.15 * intensity * np.sin(2 * np.pi * 6 * freq * t)  # 六次泛音
+        wave += 0.2 * intensity * np.sin(2 * np.pi * 7 * freq * t)   # 七次泛音（奇次）
+        wave += 0.1 * intensity * np.sin(2 * np.pi * 8 * freq * t)   # 八次泛音
+        wave += 0.08 * intensity * np.sin(2 * np.pi * 9 * freq * t)  # 九次泛音
         
-        # 添加金属弦的特有高频成分（金属质感）
+        # 添加金属弦的特有高频成分（金属质感），也受intensity影响
         metallic_freq1 = freq * 11.7  # 非整数倍泛音，产生金属感
         metallic_freq2 = freq * 13.2
-        wave += 0.03 * np.sin(2 * np.pi * metallic_freq1 * t) * np.exp(-8.0 * t)
-        wave += 0.02 * np.sin(2 * np.pi * metallic_freq2 * t) * np.exp(-10.0 * t)
+        wave += 0.03 * intensity * np.sin(2 * np.pi * metallic_freq1 * t) * np.exp(-8.0 * t)
+        wave += 0.02 * intensity * np.sin(2 * np.pi * metallic_freq2 * t) * np.exp(-10.0 * t)
         
-        # 拨弦瞬态特性（比吉他更尖锐）
-        pluck_transient = 0.25 * np.exp(-40 * t) * (
+        # 拨弦瞬态特性（比吉他更尖锐），受intensity影响
+        pluck_transient = 0.25 * intensity * np.exp(-40 * t) * (
             np.sin(2 * np.pi * freq * 1.8 * t) +  # 轻微的音高偏移
             0.5 * np.random.normal(0, 1, len(t))   # 拨弦噪声
         )

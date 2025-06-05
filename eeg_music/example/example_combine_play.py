@@ -149,8 +149,8 @@ def combine_play_by_rate():
                                 elif args.instrument == 'guzheng':
                                     duration = 1.5+addition_duration    
                                
-                                # 添加intensity的映射
-                                intensity = 0.8 + (attention / 100) * 0.2
+                                # 添加intensity的映射，扩大范围使变化更明显
+                                intensity = 0.5 + (attention / 100) * 0.2  # 范围从0.3到1.0
                                 
                                 # 根据button来决定是否获取当前情绪
                                 # 如果button为0，则使用之前的mood，如果为1，则使用当前的mood
