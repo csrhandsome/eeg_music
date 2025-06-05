@@ -115,22 +115,30 @@ def generate_instrument_wave(freq, duration=1.0, instrument="piano", intensity=0
         envelope = adsr_envelope(t, attack_time, decay_time, sustain_level, release_time, duration, 'exponential')
         
     elif instrument == "trumpet":
-        # 小号音色：明亮的谐波和持续音量
-        wave += 0.8 * np.sin(2 * np.pi * 2 * freq * t)
-        wave += 0.6 * np.sin(2 * np.pi * 3 * freq * t)
-        wave += 0.4 * np.sin(2 * np.pi * 4 * freq * t)
-        wave += 0.3 * np.sin(2 * np.pi * 5 * freq * t)
-        wave += 0.2 * np.sin(2 * np.pi * 6 * freq * t)
-        wave += 0.1 * np.sin(2 * np.pi * 7 * freq * t)
+        # 小号音色：保持音色特征但音量与钢琴相当
         
-        # 添加轻微的气息噪声
-        breath_noise = 0.05 * np.random.normal(0, 1, len(t))
+        # 计算频率衰减因子，高频时降低音量
+        freq_attenuation = 1.0
+        if freq > 400:  # 400Hz以上开始衰减
+            freq_attenuation = max(0.4, 1.0 - (freq - 400) / 1500)  # 调整衰减曲线
+        
+        # 大幅降低基础谐波强度，但保持trumpet的音色比例特征
+        base_volume = 0.6  # 整体音量降低到60%
+        wave += 0.25 * base_volume * freq_attenuation * np.sin(2 * np.pi * 2 * freq * t)   # 第二谐波
+        wave += 0.18 * base_volume * freq_attenuation * np.sin(2 * np.pi * 3 * freq * t)   # 第三谐波
+        wave += 0.12 * base_volume * freq_attenuation * np.sin(2 * np.pi * 4 * freq * t)   # 第四谐波
+        wave += 0.08 * base_volume * freq_attenuation * np.sin(2 * np.pi * 5 * freq * t)   # 第五谐波
+        wave += 0.05 * base_volume * freq_attenuation * np.sin(2 * np.pi * 6 * freq * t)   # 第六谐波
+        wave += 0.03 * base_volume * freq_attenuation * np.sin(2 * np.pi * 7 * freq * t)   # 第七谐波
+        
+        # 减少气息噪声
+        breath_noise = 0.01 * base_volume * freq_attenuation * np.random.normal(0, 1, len(t))
         wave += breath_noise
         
-        # 添加典型的铜管乐器起音特性
+        # 调整包络，降低整体音量
         attack_time = 0.08 * (2-intensity)
         decay_time = 0.1
-        sustain_level = 0.7 + 0.3 * intensity
+        sustain_level = (0.4 + 0.15 * intensity) * base_volume * freq_attenuation  # 大幅降低sustain
         release_time = 0.08
         envelope = adsr_envelope(t, attack_time, decay_time, sustain_level, release_time, duration, 'sine')
         

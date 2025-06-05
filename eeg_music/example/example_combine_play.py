@@ -165,12 +165,16 @@ def combine_play_by_rate():
                                     
                                 if mood == 0:
                                     instrument = 'piano'
+                                    print(f'play piano')
                                 elif mood == 1:
                                     instrument = 'violin'
+                                    print(f'play violin')
                                 elif mood == 2:
                                     instrument = 'trumpet'
+                                    print(f'play trumpet')
                                 elif mood == 3:
                                     instrument = 'guzheng'
+                                    print(f'play guzheng')
 
                                 
                                 if distance < 50 :
@@ -182,7 +186,7 @@ def combine_play_by_rate():
                                     #     print(f"播放音符: 频率 {freq:.2f} Hz, 持续时间 {duration:.2f}秒 (未录制)")
                                     
                                     # 始终播放音符，不管录制状态
-                                    player.play_note(freq, duration, instrument, intensity=0.8, 
+                                    player.play_note(freq, duration, instrument, intensity=intensity, 
                                                      wait=False,playback_mode="truncate")
                                 # 更新上次播放时间
                                 last_play_time = current_time
