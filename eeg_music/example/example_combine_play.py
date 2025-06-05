@@ -165,16 +165,12 @@ def combine_play_by_rate():
                                     
                                 if mood == 0:
                                     instrument = 'piano'
-                                    print(f'play piano')
                                 elif mood == 1:
                                     instrument = 'violin'
-                                    print(f'play violin')
                                 elif mood == 2:
-                                    instrument = 'trumpet'
-                                    print(f'play trumpet')
+                                    instrument = 'guitar'
                                 elif mood == 3:
                                     instrument = 'guzheng'
-                                    print(f'play guzheng')
 
                                 
                                 if distance < 50 :

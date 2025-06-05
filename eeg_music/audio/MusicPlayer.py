@@ -265,6 +265,7 @@ class MusicPlayer:
             return
         else:
             # 文件不存在，直接使用生成音符
+            print(f'play generated note: {freq}, {duration}, {instrument}, {intensity}')
             self.play_generated_note(freq, duration, instrument, intensity, wait)
             
 
